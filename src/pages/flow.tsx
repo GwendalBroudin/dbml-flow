@@ -3,9 +3,16 @@ import React from "react";
 import useStore, { AppState } from "@/state/store";
 import { useShallow } from "zustand/react/shallow";
 
-import "@xyflow/react/dist/style.css";
-import { Background, Controls, MiniMap, ReactFlow } from "@xyflow/react";
 import { TableNode } from "@/components/table-node";
+import {
+  Background,
+  Controls,
+  MiniMap,
+  ReactFlow,
+  ReactFlowProvider,
+  useOnSelectionChange,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -13,6 +20,8 @@ const selector = (state: AppState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
+  setNodes: state.setNodes,
+  setEdges: state.setEdges,
 });
 
 const nodeTypes = {
@@ -24,9 +33,25 @@ export type FlowProps = {
 };
 
 function Flow(props: FlowProps) {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useStore(
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setEdges } = useStore(
     useShallow(selector)
   );
+
+  useOnSelectionChange({
+    onChange: (selected) => {
+      console.log("Selected elements:", selected);
+
+      if (!selected.nodes.length) {
+        return;
+      }
+
+      const edgesAnimated = edges.map((edge) => ({
+        ...edge,
+        animated: selected.nodes.some(n => n.id === edge.source || n.id === edge.target),
+      }))
+      setEdges(edgesAnimated);
+    },
+  });
 
   return (
     <ReactFlow
