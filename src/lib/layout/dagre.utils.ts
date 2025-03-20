@@ -1,6 +1,6 @@
+import { TableNodeType } from "@/types/nodes.types";
 import dagre from "@dagrejs/dagre";
-import { Edge, Node, useNodesInitialized, useReactFlow } from "@xyflow/react";
-import { useEffect } from "react";
+import { Edge, Node } from "@xyflow/react";
 
 const dagreGraph = new dagre.graphlib.Graph({
   multigraph: true,
@@ -11,8 +11,8 @@ const defaultNodeWidth = 172;
 const defaultNodeHeight = 36;
 const rankdir = "LR";
 
-const getLayoutedGraph = (nodes: Node[], edges: Edge[]) => {
-  dagreGraph.setGraph({ rankdir, compound: true });
+export const getLayoutedGraph = (nodes: Node[], edges: Edge[]) => {
+  dagreGraph.setGraph({ rankdir, compound: true, ranksep: 100 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
@@ -32,7 +32,7 @@ const getLayoutedGraph = (nodes: Node[], edges: Edge[]) => {
 
   const newNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
-    const newNode = <Node>{
+    const newNode = <TableNodeType>{
       ...node,
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
@@ -45,19 +45,5 @@ const getLayoutedGraph = (nodes: Node[], edges: Edge[]) => {
     return newNode;
   });
 
-  return { nodes: newNodes, edges };
+  return newNodes;
 };
-
-export default function useDagre() {
-  const nodesInitialized = useNodesInitialized();
-  const { getNodes, getEdges, setNodes, fitView } = useReactFlow();
-
-  useEffect(() => {
-    if (nodesInitialized) {
-      const graph = getLayoutedGraph(getNodes(), getEdges());
-      setNodes(graph.nodes);
-
-      setTimeout(() => fitView(), 10);
-    }
-  }, [nodesInitialized, getNodes, getEdges, setNodes, fitView]);
-}

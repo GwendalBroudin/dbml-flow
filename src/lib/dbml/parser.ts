@@ -1,4 +1,4 @@
-import { TableNodeType } from "@/types/nodes.types";
+import { TableEdgeType, TableNodeType } from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Field from "@dbml/core/types/model_structure/field";
 import Ref from "@dbml/core/types/model_structure/ref";
@@ -24,9 +24,7 @@ export async function getNodesAndEdges() {
       return acc;
     }, {} as RefDic);
 
-
-  const tables = database.schemas
-    .flatMap((s) => s.tables);
+  const tables = database.schemas.flatMap((s) => s.tables);
 
   const refs = database.schemas.flatMap((s) => s.refs);
 
@@ -54,7 +52,7 @@ export function mapToNode(table: Table) {
     type: "table",
     data: {
       table,
-      label: table.name
+      label: table.name,
     },
     position: { x: 0, y: 0 },
   };
@@ -63,13 +61,20 @@ export function mapToNode(table: Table) {
 export function mapToEdge(ref: Ref) {
   const sourceEndPoint = ref.endpoints[0];
   const targetEndPoint = ref.endpoints[1];
-  return <Edge>{
-    label: ref.name,
+
+  const sourcefieldId = getFieldId(sourceEndPoint.fields[0]);
+  const targetfieldId = getFieldId(targetEndPoint.fields[0]);
+  return <TableEdgeType>{
     id: ref.id.toString(),
     source: getTableId(sourceEndPoint.fields[0].table),
-    // sourceHandle: "s_" + getFieldId(sourceEndPoint.fields[0]),
     target: getTableId(targetEndPoint.fields[0].table),
-    // targetHandle: "t_" + getFieldId(targetEndPoint.fields[0]),
-    type: "step",
+    type: "smoothstep",
+    sourceHandle : sourcefieldId,
+    targetHandle : targetfieldId,
+    data: {
+      sourcefieldId,
+      targetfieldId,
+      ref
+    },
   };
 }
