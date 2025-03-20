@@ -39,16 +39,11 @@ function Flow(props: FlowProps) {
 
   useOnSelectionChange({
     onChange: (selected) => {
-      console.log("Selected elements:", selected);
-
-      if (!selected.nodes.length) {
-        return;
-      }
-
       const edgesAnimated = edges.map((edge) => ({
         ...edge,
         animated: selected.nodes.some(n => n.id === edge.source || n.id === edge.target),
       }))
+
       setEdges(edgesAnimated);
     },
   });
