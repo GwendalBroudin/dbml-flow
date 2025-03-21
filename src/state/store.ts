@@ -10,6 +10,8 @@ import {
   NodeChange,
   EdgeChange,
   Connection,
+  UseOnSelectionChangeOptions,
+  OnSelectionChangeParams,
 } from "@xyflow/react";
 
 import { TableNodeType } from "@/types/nodes.types";
@@ -22,6 +24,7 @@ export type AppState = {
   onConnect: OnConnect;
   setNodes: (nodes: TableNodeType[]) => void;
   setEdges: (edges: Edge[]) => void;
+  onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
 };
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
@@ -48,6 +51,16 @@ const useStore = create<AppState>((set, get) => ({
   },
   setEdges: (edges: Edge[]) => {
     set({ edges });
+  },
+  onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => {
+    const edgesAnimated = get().edges.map((edge) => ({
+      ...edge,
+      animated: selected.nodes.some(
+        (n) => n.id === edge.source || n.id === edge.target
+      ),
+    }));
+
+    set({ edges: edgesAnimated });
   },
 }));
 

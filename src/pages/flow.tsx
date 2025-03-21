@@ -22,6 +22,7 @@ const selector = (state: AppState) => ({
   onConnect: state.onConnect,
   setNodes: state.setNodes,
   setEdges: state.setEdges,
+  onChange: state.onChange,
 });
 
 const nodeTypes = {
@@ -33,20 +34,10 @@ export type FlowProps = {
 };
 
 function Flow(props: FlowProps) {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setEdges } = useStore(
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setEdges, onChange } = useStore(
     useShallow(selector)
   );
-
-  useOnSelectionChange({
-    onChange: (selected) => {
-      const edgesAnimated = edges.map((edge) => ({
-        ...edge,
-        animated: selected.nodes.some(n => n.id === edge.source || n.id === edge.target),
-      }))
-
-      setEdges(edgesAnimated);
-    },
-  });
+  useOnSelectionChange({onChange});
 
   return (
     <ReactFlow
