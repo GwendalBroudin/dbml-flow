@@ -60,7 +60,7 @@ const DBMLEditor: React.FC = () => {
       className="flex-1"
       defaultLanguage={EDITOR_CONFIG.LANGUAGE}
       defaultValue={code}
-      // theme={EDITOR_CONFIG.THEME}
+      theme={EDITOR_CONFIG.THEME}
       options={EDITOR_OPTIONS}
     />
   );

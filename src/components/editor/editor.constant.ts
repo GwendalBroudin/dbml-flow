@@ -3,6 +3,7 @@ import { editor } from "monaco-editor";
 export const EDITOR_CONFIG = {
   BUILD_DELAY: 1000,
   LANGUAGE: "dbml",
+  THEME: "vs-dark",
 };
 
 export const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
@@ -21,6 +22,7 @@ export const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
     vertical: "hidden",
     horizontal: "hidden",
   },
+  colorDecorators: true,
 };
 
 export const StartupCode = `

@@ -11,23 +11,22 @@ import {
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
-  OnSelectionChangeParams
+  OnSelectionChangeParams,
 } from "@xyflow/react";
 import { create } from "zustand";
 
-import {
-  parseDatabaseToNodesAndEdges,
-  parser,
-} from "@/lib/dbml/parser";
+import { parseDatabaseToNodesAndEdges, parser } from "@/lib/dbml/parser";
 import {
   getCodeFromUrl,
   getPositionsFromUrl,
+  setCodeInUrl,
   setPositionsInUrl,
 } from "@/lib/dbml/storage.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import {
   applySavedPositions,
   getEdgePositions,
+  toNodeIndex,
 } from "@/lib/layout/layout.helpers";
 import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
@@ -66,8 +65,8 @@ export type AppState = {
   setNodes: (nodes: TableNodeType[]) => void;
   setEdges: (edges: Edge[]) => void;
   onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
-
-  persistPositions: () => void;
+  
+  setSavedPositions: (savedPositions: NodePositionIndex) => void;
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
@@ -87,10 +86,13 @@ const useStore = create<AppState>((set, get) => ({
   savedPositions: initialPositions,
 
   // -------- Editor Actions --------
-  setCode: (code) => set({ code }),
   setEditorModel: (model) => set({ editorModel: model }),
   setColorMode: (mode) => set({ colorMode: mode }),
-
+  setCode: (code) => {
+    setCodeInUrl(code);
+    set({ code });
+  },
+  
   parseDBML: (code) => {
     try {
       const newDB = parser.parse(code, "dbmlv2");
@@ -118,8 +120,9 @@ const useStore = create<AppState>((set, get) => ({
 
     // Preserve existing node positions
     nodes = applySavedPositions(nodes, savedPositions);
-
+    const newSavedPositions = toNodeIndex(nodes);
     set({ nodes, edges });
+    get().setSavedPositions(newSavedPositions);
   },
 
   // Editor markers management
@@ -138,6 +141,8 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // -------- Flow Actions --------
+  setNodes: (nodes: TableNodeType[]) => set({ nodes }),
+  setEdges: (edges: Edge[]) => set({ edges }),
 
   onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
     const nodes = applyNodeChanges(changes, get().nodes);
@@ -154,8 +159,6 @@ const useStore = create<AppState>((set, get) => ({
       edges: addEdge(connection, get().edges),
     });
   },
-  setNodes: (nodes: TableNodeType[]) => set({ nodes }),
-  setEdges: (edges: Edge[]) => set({ edges }),
   onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => {
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
@@ -167,22 +170,18 @@ const useStore = create<AppState>((set, get) => ({
     set({ edges: edgesAnimated });
   },
 
-  // Position management
-  persistPositions: () => {
-    const { nodes } = get();
-    const positions = nodes.reduce((acc, n) => {
-      acc[n.id] = [n.position.x, n.position.y];
-      return acc;
-    }, {} as NodePositionIndex);
-
-    setPositionsInUrl(positions);
-  },
-
   // Layout management
+  
+  setSavedPositions: (savedPositions) => {
+    setPositionsInUrl(savedPositions);
+    set({ savedPositions });
+  },
   onLayout: (direction, fitView) => {
     const { nodes, edges } = get();
     const newNodes = getLayoutedGraph(nodes, edges);
+
     set({ nodes: newNodes });
+    get().setSavedPositions(toNodeIndex(newNodes));
     setTimeout(() => fitView(), 0);
   },
 }));

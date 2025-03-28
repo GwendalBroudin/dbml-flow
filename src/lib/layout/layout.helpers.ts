@@ -2,7 +2,7 @@ import { NodePositionIndex } from "@/types/nodes.types";
 import { Edge, Node } from "@xyflow/react";
 import { resourceUsage } from "process";
 
-export function savePositions<TNode extends Node>(nodes: TNode[]) {
+export function toNodeIndex<TNode extends Node>(nodes: TNode[]) {
   return nodes.reduce((acc, node) => {
     acc[node.id] = [node.position.x, node.position.y];
     return acc;

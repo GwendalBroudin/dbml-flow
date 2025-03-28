@@ -20,34 +20,36 @@ export const getPositionStorageKey = (database: Database): string => {
 const codeParam = "code";
 
 export function getCodeFromUrl() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const base64Code = urlParams.get(codeParam) || "";
-  return atob(base64Code);
+  return getUrlB64Param(codeParam);
 }
 
 export function setCodeInUrl(code: string) {
-  const urlParams = new URLSearchParams(window.location.search);
-
-  const base64Code = btoa(code);
-  urlParams.set(codeParam, base64Code);
-  window.location.search = urlParams.toString();
+  setUrlB64Param(codeParam, code);
 }
 
 const positionParam = "positions";
 
 export function getPositionsFromUrl() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const base64Code = urlParams.get(positionParam);
-  if (!base64Code) return {} as NodePositionIndex;
-
-  const json = atob(base64Code);
+  const json = getUrlB64Param(positionParam);
+  if (!json) return {} as NodePositionIndex;
   return JSON.parse(json) as NodePositionIndex;
 }
 
 export function setPositionsInUrl(positions: NodePositionIndex) {
-  const urlParams = new URLSearchParams(window.location.search);
   const json = JSON.stringify(positions);
   const base64Code = btoa(json);
-  urlParams.set(positionParam, base64Code);
-  window.location.search = urlParams.toString();
+  setUrlB64Param(positionParam, base64Code);
+}
+
+export function getUrlB64Param(key: string) {
+  const url = new URL(window.location.href);
+  const value = url.searchParams.get(key) ?? "";
+  return atob(value);
+}
+
+export function setUrlB64Param(key: string, value: string) {
+  const url = new URL(window.location.href);
+  const base64Value = btoa(value);
+  url.searchParams.set(key, base64Value);
+  window.history.pushState(null, "", url.toString());
 }
