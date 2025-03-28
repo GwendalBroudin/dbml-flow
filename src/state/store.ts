@@ -51,17 +51,19 @@ export type AppState = {
   nodes: TableNodeType[];
   edges: Edge[];
   savedPositions: NodePositionIndex;
-
+  minimap: boolean;
+  
   // Editor Actions
   setCode: (code: string) => void;
   setEditorModel: (model: editor.ITextModel | null) => void;
-  setColorMode: (mode: ColorMode) => void;
   parseDBML: (code: string) => ParseResult;
   setMarkers: (markers: editor.IMarkerData[]) => void;
   clearMarkers: () => void;
   updateViewerFromDatabase: (database: Database) => void;
-
+  
   // Flow Actions
+  setColorMode: (mode: ColorMode) => void;
+  setMinimap: (minimap: boolean) => void;
   onNodesChange: OnNodesChange<TableNodeType>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -91,6 +93,7 @@ const useStore = create<AppState>((set, get) => ({
   nodes: [] as TableNodeType[],
   edges: [] as Edge[],
   savedPositions: initialPositions,
+  minimap: false,
 
   // -------- Editor Actions --------
   setEditorModel: (model) => set({ editorModel: model }),
@@ -147,6 +150,7 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // -------- Flow Actions --------
+  setMinimap: (minimap) => set({ minimap }),
   setNodes: (nodes: TableNodeType[]) => set({ nodes }),
   setEdges: (edges: Edge[]) => set({ edges }),
 
