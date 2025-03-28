@@ -7,6 +7,7 @@ import {
   Edge,
   EdgeChange,
   FitView,
+  Node,
   NodeChange,
   OnConnect,
   OnEdgesChange,
@@ -21,7 +22,7 @@ import {
   getPositionsFromUrl,
   setCodeInUrl,
   setPositionsInUrl,
-} from "@/lib/dbml/storage.helpers";
+} from "@/lib/url.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import {
   applySavedPositions,
@@ -31,6 +32,7 @@ import {
 import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { editor } from "monaco-editor";
+import { StartupCode } from "@/components/editor/editor.constant";
 
 // Helper type for parse results
 type ParseResult =
@@ -66,12 +68,12 @@ export type AppState = {
   setEdges: (edges: Edge[]) => void;
   onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
   
-  setSavedPositions: (savedPositions: NodePositionIndex) => void;
+  setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
 const initialPositions = getPositionsFromUrl();
-const initialCode = getCodeFromUrl();
+const initialCode = getCodeFromUrl() ?? StartupCode;
 const initialDatabase = parser.parse(initialCode, "dbmlv2");
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
@@ -98,8 +100,8 @@ const useStore = create<AppState>((set, get) => ({
       const newDB = parser.parse(code, "dbmlv2");
 
       set({ database: newDB });
-      get().clearMarkers!();
-      get().updateViewerFromDatabase!(newDB);
+      get().clearMarkers();
+      get().updateViewerFromDatabase(newDB);
 
       return { success: true, database: newDB };
     } catch (error) {
@@ -122,7 +124,7 @@ const useStore = create<AppState>((set, get) => ({
     nodes = applySavedPositions(nodes, savedPositions);
     const newSavedPositions = toNodeIndex(nodes);
     set({ nodes, edges });
-    get().setSavedPositions(newSavedPositions);
+    get().setSavedPositions(nodes);
   },
 
   // Editor markers management
@@ -172,18 +174,23 @@ const useStore = create<AppState>((set, get) => ({
 
   // Layout management
   
-  setSavedPositions: (savedPositions) => {
+  setSavedPositions: (nodes) => {
+    const savedPositions = toNodeIndex(nodes);
+    console.log("setSavedPositions", savedPositions);
     setPositionsInUrl(savedPositions);
     set({ savedPositions });
   },
   onLayout: (direction, fitView) => {
+    console.log("onLayout", direction);
     const { nodes, edges } = get();
     const newNodes = getLayoutedGraph(nodes, edges);
 
     set({ nodes: newNodes });
-    get().setSavedPositions(toNodeIndex(newNodes));
+    get().setSavedPositions(newNodes);
     setTimeout(() => fitView(), 0);
   },
 }));
+
+useStore.getState().updateViewerFromDatabase(initialDatabase);
 
 export default useStore;

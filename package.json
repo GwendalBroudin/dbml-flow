@@ -14,6 +14,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "elkjs": "^0.9.3",
+    "fflate": "^0.8.2",
     "lodash-es": "^4.17.21",
     "lodash.uniqby": "^4.7.0",
     "lucide-react": "^0.479.0",

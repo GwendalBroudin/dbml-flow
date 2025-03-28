@@ -13,6 +13,7 @@ export function applySavedPositions<TNode extends Node>(
   nodes: TNode[],
   savedPositions: NodePositionIndex
 ) {
+  console.log("applySavedPositions", savedPositions);
   return nodes.map(
     (node) =>
       <TNode>{
