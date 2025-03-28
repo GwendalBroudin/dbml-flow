@@ -4,18 +4,20 @@ import { useCallback } from "react";
 import useStore from "@/state/store";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 
+const title = "rearrange nodes";
+
 function RearrangeButton() {
   const { nodes, setNodes, edges } = useStore();
   const { fitView } = useReactFlow();
 
   const handleClick = useCallback(() => {
-    const newNodes  = getLayoutedGraph(nodes, edges);
+    const newNodes = getLayoutedGraph(nodes, edges);
     setNodes(newNodes);
     setTimeout(() => fitView(), 0);
   }, [nodes, edges]);
 
   return (
-    <ControlButton onClick={handleClick}>
+    <ControlButton onClick={handleClick} aria-label={title} title={title}>
       <WandSparkles />
     </ControlButton>
   );

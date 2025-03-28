@@ -1,14 +1,14 @@
 import * as _ from "lodash-es";
 import React, { useCallback, useEffect } from "react";
 import { Editor, OnMount } from "@monaco-editor/react";
-import { formatDiagnosticsForMonaco } from "@/services/editor/monaco-error";
-import { EDITOR_CONFIG, EDITOR_OPTIONS, StartupCode } from "./constant";
+import { EDITOR_CONFIG, EDITOR_OPTIONS, StartupCode } from "./editor.constant";
 
 import { CompilerError } from "@dbml/core/types/parse/error";
 import useStore from "@/state/store";
+import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 
 const DBMLEditor: React.FC = () => {
-  const { setDbml, setEditorModel, parseDBML, setMarkers } = useStore();
+  const { code, setCode, setEditorModel, parseDBML, setMarkers } = useStore();
 
   // Error handling utility
   const handleParserError = useCallback(
@@ -37,13 +37,13 @@ const DBMLEditor: React.FC = () => {
   const handleCodeChange = useCallback(
     _.debounce((newValue: string | undefined) => {
       const updatedCode = newValue || "";
-      setDbml(updatedCode);
+      setCode(updatedCode);
       const result = parseDBML(updatedCode);
       if (!result.success) {
         handleParserError(result.error);
       }
     }, EDITOR_CONFIG.BUILD_DELAY),
-    [parseDBML, setDbml, handleParserError]
+    [parseDBML, setCode, handleParserError]
   );
 
   // Cleanup debounced function on unmount
@@ -59,8 +59,8 @@ const DBMLEditor: React.FC = () => {
       onChange={handleCodeChange}
       className="flex-1"
       defaultLanguage={EDITOR_CONFIG.LANGUAGE}
-      defaultValue={StartupCode}
-      theme={EDITOR_CONFIG.THEME}
+      defaultValue={code}
+      // theme={EDITOR_CONFIG.THEME}
       options={EDITOR_OPTIONS}
     />
   );

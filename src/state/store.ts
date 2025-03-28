@@ -1,40 +1,148 @@
-import { create } from "zustand";
 import {
   addEdge,
-  applyNodeChanges,
   applyEdgeChanges,
-  Edge,
-  OnNodesChange,
-  OnEdgesChange,
-  OnConnect,
-  NodeChange,
-  EdgeChange,
+  applyNodeChanges,
+  ColorMode,
   Connection,
-  UseOnSelectionChangeOptions,
-  OnSelectionChangeParams,
+  Edge,
+  EdgeChange,
+  FitView,
+  NodeChange,
+  OnConnect,
+  OnEdgesChange,
+  OnNodesChange,
+  OnSelectionChangeParams
 } from "@xyflow/react";
+import { create } from "zustand";
 
-import { TableNodeType } from "@/types/nodes.types";
+import {
+  parseDatabaseToNodesAndEdges,
+  parser,
+} from "@/lib/dbml/parser";
+import {
+  getCodeFromUrl,
+  getPositionsFromUrl,
+  setPositionsInUrl,
+} from "@/lib/dbml/storage.helpers";
+import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
+import {
+  applySavedPositions,
+  getEdgePositions,
+} from "@/lib/layout/layout.helpers";
+import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
+import Database from "@dbml/core/types/model_structure/database";
+import { editor } from "monaco-editor";
+
+// Helper type for parse results
+type ParseResult =
+  | { success: true; database: Database }
+  | { success: false; error: unknown };
 
 export type AppState = {
+  // Editor State
+  code: string;
+  database: Database | null;
+  editorModel: editor.ITextModel | null;
+  colorMode: ColorMode;
+
+  // ReactFlow state
   nodes: TableNodeType[];
   edges: Edge[];
+  savedPositions: NodePositionIndex;
+
+  // Editor Actions
+  setCode: (code: string) => void;
+  setEditorModel: (model: editor.ITextModel | null) => void;
+  setColorMode: (mode: ColorMode) => void;
+  parseDBML: (code: string) => ParseResult;
+  setMarkers: (markers: editor.IMarkerData[]) => void;
+  clearMarkers: () => void;
+  updateViewerFromDatabase: (database: Database) => void;
+
+  // Flow Actions
   onNodesChange: OnNodesChange<TableNodeType>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   setNodes: (nodes: TableNodeType[]) => void;
   setEdges: (edges: Edge[]) => void;
   onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
+
+  persistPositions: () => void;
+  onLayout: (direction: string, fitView: FitView) => void;
 };
+
+const initialPositions = getPositionsFromUrl();
+const initialCode = getCodeFromUrl();
+const initialDatabase = parser.parse(initialCode, "dbmlv2");
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
 const useStore = create<AppState>((set, get) => ({
+  // -------- Initial State --------
+  code: initialCode,
+  database: initialDatabase,
+  editorModel: null,
+  colorMode: "light",
   nodes: [] as TableNodeType[],
   edges: [] as Edge[],
+  savedPositions: initialPositions,
+
+  // -------- Editor Actions --------
+  setCode: (code) => set({ code }),
+  setEditorModel: (model) => set({ editorModel: model }),
+  setColorMode: (mode) => set({ colorMode: mode }),
+
+  parseDBML: (code) => {
+    try {
+      const newDB = parser.parse(code, "dbmlv2");
+
+      set({ database: newDB });
+      get().clearMarkers!();
+      get().updateViewerFromDatabase!(newDB);
+
+      return { success: true, database: newDB };
+    } catch (error) {
+      return { success: false, error };
+    }
+  },
+
+  updateViewerFromDatabase: (database: Database) => {
+    if (!database) return;
+
+    // Get initial layout
+    let { nodes, edges } = parseDatabaseToNodesAndEdges(database);
+    const savedPositions = get().savedPositions;
+
+    if (nodes.length !== Object.keys(savedPositions).length) {
+      nodes = getLayoutedGraph(nodes, edges);
+    }
+
+    // Preserve existing node positions
+    nodes = applySavedPositions(nodes, savedPositions);
+
+    set({ nodes, edges });
+  },
+
+  // Editor markers management
+  setMarkers: (markers) => {
+    const { editorModel } = get();
+    if (editorModel) {
+      editor.setModelMarkers(editorModel, "owner", markers);
+    }
+  },
+
+  clearMarkers: () => {
+    const { editorModel } = get();
+    if (editorModel) {
+      editor.setModelMarkers(editorModel, "owner", []);
+    }
+  },
+
+  // -------- Flow Actions --------
+
   onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
-    set({
-      nodes: applyNodeChanges(changes, get().nodes),
-    });
+    const nodes = applyNodeChanges(changes, get().nodes);
+    const edges = getEdgePositions(get().edges, nodes);
+    set({ nodes, edges });
   },
   onEdgesChange: (changes: EdgeChange[]) => {
     set({
@@ -46,12 +154,8 @@ const useStore = create<AppState>((set, get) => ({
       edges: addEdge(connection, get().edges),
     });
   },
-  setNodes: (nodes: TableNodeType[]) => {
-    set({ nodes });
-  },
-  setEdges: (edges: Edge[]) => {
-    set({ edges });
-  },
+  setNodes: (nodes: TableNodeType[]) => set({ nodes }),
+  setEdges: (edges: Edge[]) => set({ edges }),
   onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => {
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
@@ -61,6 +165,25 @@ const useStore = create<AppState>((set, get) => ({
     }));
 
     set({ edges: edgesAnimated });
+  },
+
+  // Position management
+  persistPositions: () => {
+    const { nodes } = get();
+    const positions = nodes.reduce((acc, n) => {
+      acc[n.id] = [n.position.x, n.position.y];
+      return acc;
+    }, {} as NodePositionIndex);
+
+    setPositionsInUrl(positions);
+  },
+
+  // Layout management
+  onLayout: (direction, fitView) => {
+    const { nodes, edges } = get();
+    const newNodes = getLayoutedGraph(nodes, edges);
+    set({ nodes: newNodes });
+    setTimeout(() => fitView(), 0);
   },
 }));
 

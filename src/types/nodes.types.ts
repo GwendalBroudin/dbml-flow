@@ -16,4 +16,8 @@ export type TableEdgeData = {
   ref: Ref;
 };
 
-export type TableEdgeType = Edge<TableEdgeData>;  
+export type TableEdgeType = Edge<TableEdgeData>;
+
+export type NodePositionIndex = {
+  [nodeId: string]: [x: number, y: number];
+};
