@@ -37,6 +37,8 @@ const nodeTypes = {
 
 export type FlowProps = {} & React.ComponentProps<typeof ReactFlow>;
 
+export const minZoomLevel = 0.001;
+
 function ERViewer({ className, ...props }: FlowProps) {
   const {
     nodes,
@@ -68,7 +70,7 @@ function ERViewer({ className, ...props }: FlowProps) {
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       fitView
-      minZoom={0.001}
+      minZoom={minZoomLevel}
     >
       <Background />
       <Controls>
