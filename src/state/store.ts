@@ -33,6 +33,7 @@ import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { editor } from "monaco-editor";
 import { StartupCode } from "@/components/editor/editor.constant";
+import { debounce } from "lodash-es";
 
 // Helper type for parse results
 type ParseResult =
@@ -67,7 +68,7 @@ export type AppState = {
   setNodes: (nodes: TableNodeType[]) => void;
   setEdges: (edges: Edge[]) => void;
   onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
-  
+
   setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
 };
@@ -75,6 +76,10 @@ export type AppState = {
 const initialPositions = getPositionsFromUrl();
 const initialCode = getCodeFromUrl() ?? StartupCode;
 const initialDatabase = parser.parse(initialCode, "dbmlv2");
+
+const debounceTime = 100; // 1 second
+const setCodeInUrlDebounced = debounce(setCodeInUrl, debounceTime);
+const setPositionsInUrlDebounced = debounce(setPositionsInUrl, debounceTime);
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
 const useStore = create<AppState>((set, get) => ({
@@ -91,10 +96,10 @@ const useStore = create<AppState>((set, get) => ({
   setEditorModel: (model) => set({ editorModel: model }),
   setColorMode: (mode) => set({ colorMode: mode }),
   setCode: (code) => {
-    setCodeInUrl(code);
+    setCodeInUrlDebounced(code);
     set({ code });
   },
-  
+
   parseDBML: (code) => {
     try {
       const newDB = parser.parse(code, "dbmlv2");
@@ -122,7 +127,6 @@ const useStore = create<AppState>((set, get) => ({
 
     // Preserve existing node positions
     nodes = applySavedPositions(nodes, savedPositions);
-    const newSavedPositions = toNodeIndex(nodes);
     set({ nodes, edges });
     get().setSavedPositions(nodes);
   },
@@ -149,6 +153,7 @@ const useStore = create<AppState>((set, get) => ({
   onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
     const nodes = applyNodeChanges(changes, get().nodes);
     const edges = getEdgePositions(get().edges, nodes);
+    get().setSavedPositions(nodes);
     set({ nodes, edges });
   },
   onEdgesChange: (changes: EdgeChange[]) => {
@@ -173,11 +178,12 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // Layout management
-  
+
+  //Could be a bad idea to debounce this, but it works for now
   setSavedPositions: (nodes) => {
     const savedPositions = toNodeIndex(nodes);
     console.log("setSavedPositions", savedPositions);
-    setPositionsInUrl(savedPositions);
+    setPositionsInUrlDebounced(savedPositions);
     set({ savedPositions });
   },
   onLayout: (direction, fitView) => {
