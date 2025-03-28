@@ -37,8 +37,7 @@ export function getPositionsFromUrl() {
 
 export function setPositionsInUrl(positions: NodePositionIndex) {
   const json = JSON.stringify(positions);
-  const base64Code = btoa(json);
-  setUrlB64Param(positionParam, base64Code);
+  setUrlB64Param(positionParam, json);
 }
 
 export function getUrlB64Param(key: string) {
