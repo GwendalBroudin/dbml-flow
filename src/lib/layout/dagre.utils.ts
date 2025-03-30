@@ -1,4 +1,4 @@
-import { TableNodeType } from "@/types/nodes.types";
+import { NodeWithGuessedSize, TableNodeType } from "@/types/nodes.types";
 import dagre from "@dagrejs/dagre";
 import { Edge, Node } from "@xyflow/react";
 
@@ -11,14 +11,14 @@ const defaultNodeWidth = 172;
 const defaultNodeHeight = 36;
 const rankdir = "LR";
 
-export const getLayoutedGraph = (nodes: Node[], edges: Edge[]) => {
+export const getLayoutedGraph = (nodes: NodeWithGuessedSize[], edges: Edge[]) => {
   dagreGraph.setGraph({ rankdir, compound: true, ranksep: 100 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
 
-      width: node.measured?.width ?? defaultNodeWidth,
-      height: node.measured?.height ?? defaultNodeHeight,
+      width: node.measured?.width ?? node.guessed?.width ?? defaultNodeWidth,
+      height: node.measured?.height ?? node.guessed?.height ?? defaultNodeHeight,
     });
   });
 

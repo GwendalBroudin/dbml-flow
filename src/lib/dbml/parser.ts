@@ -1,4 +1,4 @@
-import { TableEdgeType, TableNodeType } from "@/types/nodes.types";
+import { GuessedSize, TableEdgeType, TableNodeType } from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Database from "@dbml/core/types/model_structure/database";
 import Field from "@dbml/core/types/model_structure/field";
@@ -18,7 +18,7 @@ export async function getTestDbml() {
 export function getNodeAndEdgesFromDbml(dbml: string) {
   try {
     const database = parser.parse(dbml, "dbmlv2");
-    console.log("database", database);  
+    console.log("database", database);
 
     return parseDatabaseToNodesAndEdges(database);
   } catch (e) {
@@ -53,11 +53,10 @@ export function getTableId(table: Table) {
 export function getFieldId(e: Field) {
   return `${getTableId(e.table)}.${e.name}`;
 }
-
 export function mapToNode(table: Table) {
   const tableId = getTableId(table);
 
-  return <TableNodeType>{
+  return <TableNodeType & GuessedSize>{
     id: tableId,
     type: "table",
     data: {
@@ -65,6 +64,7 @@ export function mapToNode(table: Table) {
       label: table.name,
     },
     position: { x: 0, y: 0 },
+    guessed: guessSize(table),
   };
 }
 
@@ -86,5 +86,21 @@ export function mapToEdge(ref: Ref) {
       targetfieldId,
       ref,
     },
+  };
+}
+
+// Guess size function for nodes
+const headerHeight = 39;
+const fieldHeight = 28;
+
+const fontSize = 14;
+
+export function guessSize(table: Table) {
+  const longestField = table.fields.map(f => f.name + f.type.type_name).reduce((longest, e) => {
+    return e.length > longest.length ? e : longest;
+  }, "");
+  return {
+    width: longestField.length * fontSize,
+    height: table.fields.length * fieldHeight + headerHeight + 20,
   };
 }

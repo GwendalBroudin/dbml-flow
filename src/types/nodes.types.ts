@@ -21,3 +21,12 @@ export type TableEdgeType = Edge<TableEdgeData>;
 export type NodePositionIndex = {
   [nodeId: string]: [x: number, y: number];
 };
+
+export type GuessedSize = {
+  guessed?: {
+    width: number;
+    height: number;
+  };
+};
+
+export type NodeWithGuessedSize = Node & GuessedSize;
