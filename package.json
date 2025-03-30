@@ -1,9 +1,12 @@
 {
   "type": "module",
+  "homepage": "https://gwendalbroudin.github.io/dbml-flow",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "tsc && vite build ",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
@@ -36,6 +39,7 @@
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react": "^4.1.0",
     "esbuild-wasm": "^0.17.12",
+    "gh-pages": "^6.3.0",
     "typescript": "^5.8.2",
     "vite": "^6.2.1"
   },
