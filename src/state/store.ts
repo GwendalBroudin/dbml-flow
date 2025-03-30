@@ -76,7 +76,7 @@ export type AppState = {
 };
 
 const initialPositions = getPositionsFromUrl();
-const initialCode = getCodeFromUrl() ?? StartupCode;
+const initialCode = getCodeFromUrl() || StartupCode;
 const initialDatabase = parser.parse(initialCode, "dbmlv2");
 
 const debounceTime = 100; // 1 second
@@ -183,7 +183,6 @@ const useStore = create<AppState>((set, get) => ({
 
   // Layout management
 
-  //Could be a bad idea to debounce this, but it works for now
   setSavedPositions: (nodes) => {
     const savedPositions = toNodeIndex(nodes);
     console.log("setSavedPositions", savedPositions);
