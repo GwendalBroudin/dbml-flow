@@ -35,13 +35,13 @@ function DownloadButton() {
       0.2
     );
  
-    toPng(document.querySelector('.react-flow__viewport')!, {
+    toPng(document.querySelector('.react-flow__viewport') as HTMLElement, {
       backgroundColor: '#1a365d',
       width: imageWidth,
       height: imageHeight,
       style: {
-        width: imageWidth,
-        height: imageHeight,
+        width: imageWidth.toString() + 'px',
+        height: imageHeight.toString() + 'px',
         transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
       },
     }).then(downloadImage);

@@ -1,4 +1,4 @@
-import { Position, Node, InternalNode } from "@xyflow/react";
+import { Position, Node, InternalNode, Edge } from "@xyflow/react";
 
 // returns the position (top,right,bottom or right) passed node compared to
 function getParams(nodeA: InternalNode, nodeB: InternalNode) {
@@ -57,25 +57,25 @@ function getHandleCoordsByPosition(
   return [x, y];
 }
 
-function getNodeCenter(node) {
+function getNodeCenter(node: InternalNode) {
   return {
-    x: node.internals.positionAbsolute.x + node.measured.width / 2,
-    y: node.internals.positionAbsolute.y + node.measured.height / 2,
+    x: node.internals.positionAbsolute.x + node.measured.width! / 2,
+    y: node.internals.positionAbsolute.y + node.measured.height! / 2,
   };
 }
 
-function getNodeBounds(node) {
+function getNodeBounds(node: InternalNode) {
   return {
     xMin: node.internals.positionAbsolute.x,
-    xMax: node.internals.positionAbsolute.x + node.measured.width,
+    xMax: node.internals.positionAbsolute.x + node.measured.width!,
 
     yMin: node.internals.positionAbsolute.y,
-    yamx: node.internals.positionAbsolute.y + node.measured.height,
+    yamx: node.internals.positionAbsolute.y + node.measured.height!,
   };
 }
 
 // returns the parameters (sx, sy, tx, ty, sourcePos, targetPos) you need to create an edge
-export function getEdgeParams(source, target) {
+export function getEdgeParams(source: InternalNode, target: InternalNode) {
   const [sx, sy, sourcePos] = getParams(source, target);
   const [tx, ty, targetPos] = getParams(target, source);
 
@@ -89,7 +89,7 @@ export function getEdgeParams(source, target) {
   };
 }
 
-export function distributeCenter(center, range, number, index) {
+export function distributeCenter(center: number, range: number, number: number, index: number) {
   const divider = (number % 2 === 0 ? number : number - 1) ?? 1;
 
   const step = (range * 2) / divider;

@@ -103,7 +103,7 @@ monaco.languages.setMonarchTokensProvider("dbml", {
     /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
   newline: /[\r\n]/,
   digits: /\d+(_+\d+)*/,
-  idtf: /[\p{L}0-9_]+/,
+  idtf: /[\p{L}0-9_]+/u,
   ignoreCase: !0,
   unicode: !0,
   tokenizer: {
