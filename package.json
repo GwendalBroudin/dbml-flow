@@ -1,4 +1,5 @@
 {
+  "name": "dbml-flow",
   "type": "module",
   "homepage": "https://gwendalbroudin.github.io/dbml-flow",
   "scripts": {
