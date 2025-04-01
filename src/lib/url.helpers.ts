@@ -52,16 +52,23 @@ export function setUrlB64Param(key: string, value: string) {
 
   const url = new URL(window.location.href);
   url.searchParams.set(key, uriComponent);
-  const urlString = url.toString();
+  let urlString = urlToCleanString(url);
 
   // remove the param if it's too long
   if (urlString.length > 32767) {
     console.error("URL param too long", key, uriComponent.length);
     success = false;
     url.searchParams.delete(key);
+    urlString = urlToCleanString(url);
   }
 
-  window.history.pushState(null, "", url.toString());
+  console.log("setUrlB64Param", key, url.search);
+
+  window.history.pushState(null, "", urlToCleanString (url));
 
   return success;
+}
+
+export function urlToCleanString (url : URL){
+  return url.origin + url.pathname + url.hash +  url.search;
 }
