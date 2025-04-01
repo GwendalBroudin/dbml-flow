@@ -75,9 +75,10 @@ export type AppState = {
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
+console.log(window.location.href);
 const initialPositions = getPositionsFromUrl();
 const initialCode = getCodeFromUrl() || StartupCode;
-const initialDatabase = parser.parse(initialCode, "dbmlv2");
+
 
 const debounceTime = 100; // 1 second
 const setCodeInUrlDebounced = debounce(setCodeInUrl, debounceTime);
@@ -87,7 +88,7 @@ const setPositionsInUrlDebounced = debounce(setPositionsInUrl, debounceTime);
 const useStore = create<AppState>((set, get) => ({
   // -------- Initial State --------
   code: initialCode,
-  database: initialDatabase,
+  database: null,
   editorModel: null,
   colorMode: "light",
   nodes: [] as TableNodeType[],
@@ -185,12 +186,10 @@ const useStore = create<AppState>((set, get) => ({
 
   setSavedPositions: (nodes) => {
     const savedPositions = toNodeIndex(nodes);
-    console.log("setSavedPositions", savedPositions);
     setPositionsInUrlDebounced(savedPositions);
     set({ savedPositions });
   },
   onLayout: (direction, fitView) => {
-    console.log("onLayout", direction);
     const { nodes, edges } = get();
     const newNodes = getLayoutedGraph(nodes, edges);
 
@@ -200,6 +199,6 @@ const useStore = create<AppState>((set, get) => ({
   },
 }));
 
-useStore.getState().updateViewerFromDatabase(initialDatabase);
+useStore.getState().parseDBML(initialCode);
 
 export default useStore;
