@@ -13,7 +13,7 @@ export function applySavedPositions<TNode extends Node>(
   nodes: TNode[],
   savedPositions: NodePositionIndex
 ) {
-  console.log("applySavedPositions", savedPositions);
+  // console.log("applySavedPositions", savedPositions);
   return nodes.map(
     (node) =>
       <TNode>{
@@ -28,20 +28,19 @@ export function applySavedPositions<TNode extends Node>(
 
 export function getEdgePositions(edges: Edge[], nodes: Node[]) {
   return edges;
-//   const nodeMap = nodes.reduce((acc, node) => {
-//     acc[node.id] = node;
-//     return acc;
-//   }, {} as Record<string, Node>);
+  //   const nodeMap = nodes.reduce((acc, node) => {
+  //     acc[node.id] = node;
+  //     return acc;
+  //   }, {} as Record<string, Node>);
 
-//   const edgeMap = 
+  //   const edgeMap =
 
-// return edges.map((edge) => {
-//   const sourceNode = nodeMap[edge.source];
-//   const targetNode = nodeMap[edge.target];
+  // return edges.map((edge) => {
+  //   const sourceNode = nodeMap[edge.source];
+  //   const targetNode = nodeMap[edge.target];
 
-
-//   return {
-//     sourcePosition: edge.sourceHandle ? "right" : "left",
-//     targetPosition: edge.targetHandle ? "right" : "left",
-//   };
+  //   return {
+  //     sourcePosition: edge.sourceHandle ? "right" : "left",
+  //     targetPosition: edge.targetHandle ? "right" : "left",
+  //   };
 }

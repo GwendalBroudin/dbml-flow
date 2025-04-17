@@ -59,7 +59,7 @@ const DBMLEditor: React.FC = () => {
       onChange={handleCodeChange}
       className="flex-1"
       defaultLanguage={EDITOR_CONFIG.LANGUAGE}
-      defaultValue={code}
+      value={code}
       theme={EDITOR_CONFIG.THEME}
       options={EDITOR_OPTIONS}
     />

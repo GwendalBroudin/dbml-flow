@@ -15,9 +15,9 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
 import { getNodeColor } from "./viewer.helper";
-import MinimapButton from "../controls/minimap-button";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -29,6 +29,8 @@ const selector = (state: AppState) => ({
   setEdges: state.setEdges,
   onChange: state.onChange,
   minimap: state.minimap,
+  firstRender: state.firstRender,
+  setfirstRender: state.setfirstRender,
 });
 
 const nodeTypes = {
@@ -48,15 +50,24 @@ function ERViewer({ className, ...props }: FlowProps) {
     onConnect,
     onChange,
     minimap,
+    firstRender,
+    setfirstRender,
   } = useStore(useShallow(selector));
   const { fitView } = useReactFlow();
   const initialized = useNodesInitialized();
 
   useOnSelectionChange({ onChange });
 
+  // trigger fitview on every code change in the editor
   useEffect(() => {
-    fitView();
-  }, [initialized]);
+    console.log("firstRender", firstRender);
+    if (firstRender) {
+      setTimeout(() => {
+        fitView();
+        setfirstRender(false);
+      }, 0);
+    }
+  }, [initialized, firstRender, setfirstRender]);
 
   const map = minimap ? <MiniMap nodeColor={getNodeColor} /> : null;
 

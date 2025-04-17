@@ -1,10 +1,4 @@
-import { NodePositionIndex } from "@/types/nodes.types";
-import {
-  compressSync,
-  decompressSync,
-  strFromU8,
-  strToU8
-} from "fflate";
+import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
 
 const codeParam = "code";
 
@@ -14,19 +8,6 @@ export function getCodeFromUrl() {
 
 export function setCodeInUrl(code: string) {
   setUrlB64Param(codeParam, code);
-}
-
-const positionParam = "positions";
-
-export function getPositionsFromUrl() {
-  const json = getUrlB64Param(positionParam);
-  if (!json) return {} as NodePositionIndex;
-  return JSON.parse(json) as NodePositionIndex;
-}
-
-export function setPositionsInUrl(positions: NodePositionIndex) {
-  const json = JSON.stringify(positions);
-  setUrlB64Param(positionParam, json);
 }
 
 export function getUrlB64Param(key: string) {
@@ -62,13 +43,11 @@ export function setUrlB64Param(key: string, value: string) {
     urlString = urlToCleanString(url);
   }
 
-  console.log("setUrlB64Param", key, url.search);
-
-  window.history.pushState(null, "", urlToCleanString (url));
+  window.history.pushState(null, "", urlToCleanString(url));
 
   return success;
 }
 
-export function urlToCleanString (url : URL){
-  return url.origin + url.pathname + url.hash +  url.search;
+export function urlToCleanString(url: URL) {
+  return url.origin + url.pathname + url.hash + url.search;
 }
