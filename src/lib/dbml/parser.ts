@@ -1,4 +1,9 @@
-import { GuessedSize, TableEdgeType, TableNodeType } from "@/types/nodes.types";
+import {
+  GuessedSize,
+  NodePositionIndex,
+  TableEdgeType,
+  TableNodeType,
+} from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Database from "@dbml/core/types/model_structure/database";
 import Field from "@dbml/core/types/model_structure/field";
@@ -96,11 +101,39 @@ const fieldHeight = 28;
 const fontSize = 14;
 
 export function guessSize(table: Table) {
-  const longestField = table.fields.map(f => f.name + f.type.type_name).reduce((longest, e) => {
-    return e.length > longest.length ? e : longest;
-  }, "");
+  const longestField = table.fields
+    .map((f) => f.name + f.type.type_name)
+    .reduce((longest, e) => {
+      return e.length > longest.length ? e : longest;
+    }, "");
   return {
     width: longestField.length * fontSize,
     height: table.fields.length * fieldHeight + headerHeight + 20,
   };
+}
+
+const positionStoreRegex = /\n\/\*\s*<posistions>(.*)<\/positions>\s*\*\//m;
+
+export function extractPositions(code: string) {
+  const positionMatch = positionStoreRegex.exec(code);
+  if (!positionMatch) return {};
+
+  return JSON.parse(positionMatch[1]) as NodePositionIndex;
+}
+
+let isRunning = false;
+export function setPositionsInCode(
+  code: string,
+  savedPositions: NodePositionIndex
+) {
+  const positionMatch = positionStoreRegex.exec(code);
+  console.log("setPositionsInCode");
+  const start = positionMatch?.index ?? code.length;
+  const end = start + (positionMatch?.[0].length ?? 0);
+
+  return (
+    code.substring(0, start) +
+    `\n/*<posistions>${JSON.stringify(savedPositions)}</positions>*/` +
+    code.substring(end)
+  );
 }

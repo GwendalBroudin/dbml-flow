@@ -16,24 +16,24 @@ import {
 } from "@xyflow/react";
 import { create } from "zustand";
 
-import { parseDatabaseToNodesAndEdges, parser } from "@/lib/dbml/parser";
+import { StartupCode } from "@/components/editor/editor.constant";
 import {
-  getCodeFromUrl,
-  getPositionsFromUrl,
-  setCodeInUrl,
-  setPositionsInUrl,
-} from "@/lib/url.helpers";
+  extractPositions,
+  parseDatabaseToNodesAndEdges,
+  parser,
+  setPositionsInCode,
+} from "@/lib/dbml/parser";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import {
   applySavedPositions,
   getEdgePositions,
   toNodeIndex,
 } from "@/lib/layout/layout.helpers";
+import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
-import { editor } from "monaco-editor";
-import { StartupCode } from "@/components/editor/editor.constant";
 import { debounce } from "lodash-es";
+import { editor } from "monaco-editor";
 
 // Helper type for parse results
 type ParseResult =
@@ -46,13 +46,18 @@ export type AppState = {
   database: Database | null;
   editorModel: editor.ITextModel | null;
   colorMode: ColorMode;
+  savePositionsInCode: boolean;
+  firstRender: boolean;
 
   // ReactFlow state
   nodes: TableNodeType[];
   edges: Edge[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
-  
+
+  //initialisation
+  initState: () => void;
+
   // Editor Actions
   setCode: (code: string) => void;
   setEditorModel: (model: editor.ITextModel | null) => void;
@@ -60,8 +65,9 @@ export type AppState = {
   setMarkers: (markers: editor.IMarkerData[]) => void;
   clearMarkers: () => void;
   updateViewerFromDatabase: (database: Database) => void;
-  
+
   // Flow Actions
+  setfirstRender: (firstRender: boolean) => void;
   setColorMode: (mode: ColorMode) => void;
   setMinimap: (minimap: boolean) => void;
   onNodesChange: OnNodesChange<TableNodeType>;
@@ -75,25 +81,40 @@ export type AppState = {
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
-const initialPositions = getPositionsFromUrl();
-const initialCode = getCodeFromUrl() || StartupCode;
-const initialDatabase = parser.parse(initialCode, "dbmlv2");
-
-const debounceTime = 100; // 1 second
+const debounceTime = 300;
 const setCodeInUrlDebounced = debounce(setCodeInUrl, debounceTime);
-const setPositionsInUrlDebounced = debounce(setPositionsInUrl, debounceTime);
+const setPositionsInCodeDebounced = debounce(
+  (
+    code: string,
+    savedPositions: NodePositionIndex,
+    setCode: (code: string) => void
+  ) => {
+    const newCode = setPositionsInCode(code, savedPositions);
+    setCode(newCode);
+  },
+  debounceTime
+);
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
 const useStore = create<AppState>((set, get) => ({
   // -------- Initial State --------
-  code: initialCode,
-  database: initialDatabase,
+  code: "",
+  database: null,
   editorModel: null,
   colorMode: "light",
   nodes: [] as TableNodeType[],
   edges: [] as Edge[],
-  savedPositions: initialPositions,
+  savedPositions: {},
   minimap: false,
+  savePositionsInCode: true,
+  firstRender: true,
+
+  initState: () => {
+    const code = getCodeFromUrl() || StartupCode;
+    set({ code, savedPositions: extractPositions(code) });
+    const res = get().parseDBML(code);
+    if (!res.success) return;
+  },
 
   // -------- Editor Actions --------
   setEditorModel: (model) => set({ editorModel: model }),
@@ -106,10 +127,11 @@ const useStore = create<AppState>((set, get) => ({
   parseDBML: (code) => {
     try {
       const newDB = parser.parse(code, "dbmlv2");
-
       set({ database: newDB });
-      get().clearMarkers();
-      get().updateViewerFromDatabase(newDB);
+      const { clearMarkers, updateViewerFromDatabase } = get();
+
+      clearMarkers();
+      updateViewerFromDatabase(newDB);
 
       return { success: true, database: newDB };
     } catch (error) {
@@ -119,10 +141,14 @@ const useStore = create<AppState>((set, get) => ({
 
   updateViewerFromDatabase: (database: Database) => {
     if (!database) return;
+    console.log("database", database);
+
+    const { savedPositions: initialSavedPositions, setSavedPositions } = get();
 
     // Get initial layout
     let { nodes, edges } = parseDatabaseToNodesAndEdges(database);
-    const savedPositions = get().savedPositions;
+
+    const savedPositions = initialSavedPositions;
 
     if (nodes.length !== Object.keys(savedPositions).length) {
       nodes = getLayoutedGraph(nodes, edges);
@@ -131,7 +157,7 @@ const useStore = create<AppState>((set, get) => ({
     // Preserve existing node positions
     nodes = applySavedPositions(nodes, savedPositions);
     set({ nodes, edges });
-    get().setSavedPositions(nodes);
+    setSavedPositions(nodes);
   },
 
   // Editor markers management
@@ -150,6 +176,7 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // -------- Flow Actions --------
+  setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
   setNodes: (nodes: TableNodeType[]) => set({ nodes }),
   setEdges: (edges: Edge[]) => set({ edges }),
@@ -182,15 +209,15 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // Layout management
-
   setSavedPositions: (nodes) => {
     const savedPositions = toNodeIndex(nodes);
-    console.log("setSavedPositions", savedPositions);
-    setPositionsInUrlDebounced(savedPositions);
+    const { code, database, savePositionsInCode, setCode } = get();
     set({ savedPositions });
+    if (savePositionsInCode && database) {
+      setPositionsInCodeDebounced(code, savedPositions, setCode);
+    }
   },
   onLayout: (direction, fitView) => {
-    console.log("onLayout", direction);
     const { nodes, edges } = get();
     const newNodes = getLayoutedGraph(nodes, edges);
 
@@ -200,6 +227,6 @@ const useStore = create<AppState>((set, get) => ({
   },
 }));
 
-useStore.getState().updateViewerFromDatabase(initialDatabase);
+useStore.getState().initState();
 
 export default useStore;

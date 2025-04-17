@@ -1,10 +1,4 @@
-import { NodePositionIndex } from "@/types/nodes.types";
-import {
-  compressSync,
-  decompressSync,
-  strFromU8,
-  strToU8
-} from "fflate";
+import { compressSync, decompressSync, strFromU8, strToU8 } from "fflate";
 
 const codeParam = "code";
 
@@ -14,19 +8,6 @@ export function getCodeFromUrl() {
 
 export function setCodeInUrl(code: string) {
   setUrlB64Param(codeParam, code);
-}
-
-const positionParam = "positions";
-
-export function getPositionsFromUrl() {
-  const json = getUrlB64Param(positionParam);
-  if (!json) return {} as NodePositionIndex;
-  return JSON.parse(json) as NodePositionIndex;
-}
-
-export function setPositionsInUrl(positions: NodePositionIndex) {
-  const json = JSON.stringify(positions);
-  setUrlB64Param(positionParam, json);
 }
 
 export function getUrlB64Param(key: string) {
@@ -52,16 +33,21 @@ export function setUrlB64Param(key: string, value: string) {
 
   const url = new URL(window.location.href);
   url.searchParams.set(key, uriComponent);
-  const urlString = url.toString();
+  let urlString = urlToCleanString(url);
 
   // remove the param if it's too long
   if (urlString.length > 32767) {
     console.error("URL param too long", key, uriComponent.length);
     success = false;
     url.searchParams.delete(key);
+    urlString = urlToCleanString(url);
   }
 
-  window.history.pushState(null, "", url.toString());
+  window.history.pushState(null, "", urlToCleanString(url));
 
   return success;
+}
+
+export function urlToCleanString(url: URL) {
+  return url.origin + url.pathname + url.hash + url.search;
 }
