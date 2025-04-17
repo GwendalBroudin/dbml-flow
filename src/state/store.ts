@@ -56,7 +56,7 @@ export type AppState = {
   minimap: boolean;
 
   //initialisation
-  initState: (code: string) => void;
+  initState: () => void;
 
   // Editor Actions
   setCode: (code: string) => void;
@@ -81,10 +81,7 @@ export type AppState = {
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
-console.log(window.location.href);
-const initialCode = getCodeFromUrl() || StartupCode;
-
-const debounceTime = 301; // 1 second
+const debounceTime = 300;
 const setCodeInUrlDebounced = debounce(setCodeInUrl, debounceTime);
 const setPositionsInCodeDebounced = debounce(
   (
@@ -101,7 +98,7 @@ const setPositionsInCodeDebounced = debounce(
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
 const useStore = create<AppState>((set, get) => ({
   // -------- Initial State --------
-  code: initialCode,
+  code: "",
   database: null,
   editorModel: null,
   colorMode: "light",
@@ -112,8 +109,9 @@ const useStore = create<AppState>((set, get) => ({
   savePositionsInCode: true,
   firstRender: true,
 
-  initState: (code: string) => {
-    set({ savedPositions: extractPositions(code) });
+  initState: () => {
+    const code = getCodeFromUrl() || StartupCode;
+    set({ code, savedPositions: extractPositions(code) });
     const res = get().parseDBML(code);
     if (!res.success) return;
   },
@@ -229,6 +227,6 @@ const useStore = create<AppState>((set, get) => ({
   },
 }));
 
-useStore.getState().initState(initialCode);
+useStore.getState().initState();
 
 export default useStore;
