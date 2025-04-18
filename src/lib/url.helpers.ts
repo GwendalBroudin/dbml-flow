@@ -7,7 +7,7 @@ export function getCodeFromUrl() {
 }
 
 export function setCodeInUrl(code: string) {
-  console.log("setCodeInUrl", code);
+  // console.log("setCodeInUrl", code);
   setUrlB64Param(codeParam, code);
 }
 
@@ -33,11 +33,9 @@ export function setUrlB64Param(key: string, value: string) {
   }
 
   const url = new URL(window.location.href);
-  console.log("searchParams", url.searchParams);
 
   url.searchParams.set(key, uriComponent);
   let urlString = url.toString();
-  console.log("urlString", urlString);
   // remove the param if it's too long
   if (urlString.length > 32767) {
     console.error("URL param too long", key, uriComponent.length);

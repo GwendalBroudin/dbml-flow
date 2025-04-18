@@ -34,6 +34,10 @@ import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
+import {
+  computeEdgesRelativeData,
+  EdgesRelativeData,
+} from "@/lib/flow/edges.helpers";
 
 // Helper type for parse results
 type ParseResult =
@@ -54,7 +58,7 @@ export type AppState = {
   edges: Edge[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
-
+  edgesRelativeData: EdgesRelativeData;
   //initialisation
   initState: () => void;
 
@@ -108,6 +112,7 @@ const useStore = create<AppState>((set, get) => ({
   minimap: false,
   savePositionsInCode: true,
   firstRender: true,
+  edgesRelativeData: {} as EdgesRelativeData,
 
   initState: () => {
     const code = getCodeFromUrl() || StartupCode;
@@ -183,9 +188,10 @@ const useStore = create<AppState>((set, get) => ({
 
   onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
     const nodes = applyNodeChanges(changes, get().nodes);
-    const edges = getEdgePositions(get().edges, nodes);
+    // const edges = getEdgePositions(get().edges, nodes);
+    const edgesRelativeData = computeEdgesRelativeData(nodes, get().edges);
     get().setSavedPositions(nodes);
-    set({ nodes, edges });
+    set({ nodes, edgesRelativeData });
   },
   onEdgesChange: (changes: EdgeChange[]) => {
     set({

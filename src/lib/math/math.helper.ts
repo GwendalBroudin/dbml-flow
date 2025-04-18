@@ -2,26 +2,50 @@ import { Position, Node, InternalNode, Edge } from "@xyflow/react";
 
 // returns the position (top,right,bottom or right) passed node compared to
 function getParams(nodeA: InternalNode, nodeB: InternalNode) {
-  const boundsA = getNodeBounds(nodeA);
-  const boundsB = getNodeBounds(nodeB);
+  let data = getNodesRelativePosition(nodeA, nodeB);
 
-  let position;
+  const [x, y] = getHandleCoordsByPosition(nodeA, data.sourcePos);
+  return [x, y, data];
+}
+export type NodesRelativePosition = "center" | "right" | "left";
+export type RelativePositionData = {
+  nodesRelativePosition: NodesRelativePosition;
+  sourcePos: Position;
+  targetPos: Position;
+};
 
-  // A on the Right of B
-  if (boundsA.xMax < boundsB.xMin) {
-    position = Position.Right;
+export function getNodesRelativePosition(
+  source: Node | InternalNode,
+  target: Node | InternalNode
+): RelativePositionData {
+  const boundsTarget = getNodeBounds(source);
+  const boundsSource = getNodeBounds(target);
+  // Source on the Right of Target
+  if (boundsTarget.xMax < boundsSource.xMin) {
+    return {
+      nodesRelativePosition: "right",
+      sourcePos: Position.Right,
+      targetPos: Position.Left,
+    };
   }
-  // A on the Right of B
-  else if (boundsA.xMin > boundsB.xMax) {
-    position = Position.Left;
+
+  // Source on the Right of Target
+  else if (boundsTarget.xMin > boundsSource.xMax) {
+    return {
+      nodesRelativePosition: "left",
+      sourcePos: Position.Left,
+      targetPos: Position.Right,
+    };
   }
-  //A aligned with B
+
+  // Source aligned with Target
   else {
-    position = Position.Left;
+    return {
+      nodesRelativePosition: "center",
+      sourcePos: Position.Right,
+      targetPos: Position.Right,
+    };
   }
-
-  const [x, y] = getHandleCoordsByPosition(nodeA, position);
-  return [x, y, position];
 }
 
 function getHandleCoordsByPosition(
@@ -64,13 +88,17 @@ function getNodeCenter(node: InternalNode) {
   };
 }
 
-function getNodeBounds(node: InternalNode) {
-  return {
-    xMin: node.internals.positionAbsolute.x,
-    xMax: node.internals.positionAbsolute.x + node.measured.width!,
+function getNodeBounds(node: Node | InternalNode) {
+  const position =
+    (node as InternalNode).internals?.positionAbsolute ?? node.position;
+  const size = node.measured ?? { width: node.width, height: node.height };
 
-    yMin: node.internals.positionAbsolute.y,
-    yamx: node.internals.positionAbsolute.y + node.measured.height!,
+  return {
+    xMin: position.x,
+    xMax: position.x + size.width!,
+
+    yMin: position.y,
+    yamx: position.y + size.height!,
   };
 }
 
@@ -89,7 +117,26 @@ export function getEdgeParams(source: InternalNode, target: InternalNode) {
   };
 }
 
-export function distributeCenter(center: number, range: number, number: number, index: number) {
+export function getEdgePositions(source: InternalNode, target: InternalNode) {
+  const [sx, sy, sourcePos] = getParams(source, target);
+  const [tx, ty, targetPos] = getParams(target, source);
+
+  return {
+    sx,
+    sy,
+    tx,
+    ty,
+    sourcePos,
+    targetPos,
+  };
+}
+
+export function distributeCenter(
+  center: number,
+  range: number,
+  number: number,
+  index: number
+) {
   const divider = (number % 2 === 0 ? number : number - 1) ?? 1;
 
   const step = (range * 2) / divider;
@@ -100,6 +147,44 @@ export function distributeCenter(center: number, range: number, number: number, 
   }
 
   const res = min + step * index;
-  console.log({ divider, center, range, number, index, step, min, res });
+  // console.log({ divider, center, range, number, index, step, min, res });
   return res;
+}
+
+export function getHandleCoords(
+  node: InternalNode,
+  handleId: string,
+  handlePosition: Position
+) {
+  // all handles are from type source, that's why we use handleBounds.source here
+  const handleBounds = node.internals?.handleBounds;
+
+  const handle = [
+    ...(handleBounds!.source ?? []),
+    ...(handleBounds!.target ?? []),
+  ].find((h) => h.position === handlePosition && h.id === handleId);
+
+  if (!handle) {
+    throw new Error(`Handle not found for position: ${handlePosition}`);
+  }
+
+  let offsetX = handle.width / 2;
+  let offsetY = handle.height / 2;
+
+  // this is a tiny detail to make the markerEnd of an edge visible.
+  // The handle position that gets calculated has the origin top-left, so depending which side we are using, we add a little offset
+  // when the handlePosition is Position.Right for example, we need to add an offset as big as the handle itself in order to get the correct position
+  switch (handlePosition) {
+    case Position.Left:
+      offsetX = 0;
+      break;
+    case Position.Right:
+      offsetX = handle.width;
+      break;
+  }
+
+  const x = node.internals.positionAbsolute.x + handle.x + offsetX;
+  const y = node.internals.positionAbsolute.y + handle.y + offsetY;
+
+  return [x, y];
 }

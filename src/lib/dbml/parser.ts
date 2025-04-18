@@ -1,3 +1,5 @@
+import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
+import { ERMarkerTypes } from "@/components/edges/markers";
 import {
   GuessedSize,
   NodePositionIndex,
@@ -83,9 +85,11 @@ export function mapToEdge(ref: Ref) {
     id: ref.id.toString(),
     source: getTableId(sourceEndPoint.fields[0].table),
     target: getTableId(targetEndPoint.fields[0].table),
-    type: "smoothstep",
+    type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
+    markerEnd: ERMarkerTypes.many,
+    markerStart: ERMarkerTypes.many,
     data: {
       sourcefieldId,
       targetfieldId,
