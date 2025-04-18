@@ -18,12 +18,12 @@ function HorizontalFloatingEdge({
 }: EdgeProps) {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
+  const { edgesRelativeData } = useStore();
 
   if (!sourceNode || !targetNode) {
     return null;
   }
 
-  const { edgesRelativeData } = useStore();
   const positionData = edgesRelativeData?.positions?.[id];
   if (!positionData) return null;
 
@@ -31,31 +31,34 @@ function HorizontalFloatingEdge({
   const [sx, sy] = getHandleCoords(sourceNode, sourceHandleId!, sourcePos);
   const [tx, ty] = getHandleCoords(targetNode, targetHandleId!, targetPos);
 
-  // return useMemo(() => {
-  const [edgePath] = getSmoothStepPath({
-    sourceX: sx,
-    // calc number depending on number of different relation types per handle
-    // sourceY: distributeCenter(sy, 10, 3, props.data.index),
-    sourceY: sy,
-    sourcePosition: sourcePos,
-    targetPosition: targetPos,
-    targetX: tx,
-    targetY: ty,
-    offset: 5,
-  });
+  return useMemo(() => {
+    const [edgePath] = getSmoothStepPath({
+      sourceX: sx,
+      // calc number depending on number of different relation types per handle
+      // sourceY: distributeCenter(sy, 10, 3, props.data.index),
+      sourceY: sy,
+      sourcePosition: sourcePos,
+      targetPosition: targetPos,
+      targetX: tx,
+      targetY: ty,
+      offset: 5,
+    });
 
-  return (
-    <BaseEdge
-      path={edgePath}
-      id={id}
-      // d={edgePath}
-      strokeWidth={5}
-      style={style}
-      //cause error React does not recognize the `pathOptions` prop
-      // {...props}
-    />
-  );
-  // }, [sourcePos, targetPos, sx, sy, tx, ty]);
+    return (
+      <BaseEdge
+        path={edgePath}
+        id={id}
+        d={edgePath}
+        strokeWidth={5}
+        style={style}
+        markerEnd={props.markerEnd}
+        markerStart={props.markerStart}
+
+        //cause error React does not recognize the `pathOptions` prop etc...
+        // {...props}
+      />
+    );
+  }, [sourcePos, targetPos, sx, sy, tx, ty]);
 }
 
 export default HorizontalFloatingEdge;

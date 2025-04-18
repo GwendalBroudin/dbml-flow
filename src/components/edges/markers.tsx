@@ -5,7 +5,7 @@ export const ERMarkerTypes = {
 };
 
 export type ERMarkerProps = {
-  color: string;
+  color?: string;
 };
 
 export default function ERMarkers({ color }: ERMarkerProps) {

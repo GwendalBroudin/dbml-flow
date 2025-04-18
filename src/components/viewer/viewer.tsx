@@ -79,34 +79,32 @@ function ERViewer({ className, ...props }: FlowProps) {
   const map = minimap ? <MiniMap nodeColor={getNodeColor} /> : null;
 
   return (
-    <>
-      <ERMarkers color="#b1b1b7" />
-      <ReactFlow
-        className={className}
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-        minZoom={minZoomLevel}
-        connectionMode={ConnectionMode.Loose}
-      >
-        <Background />
-        <Controls>
-          <RearrangeButton />
-          <MinimapButton />
-        </Controls>
-        {map}
-      </ReactFlow>
-    </>
+    <ReactFlow
+      className={className}
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+      fitView
+      minZoom={minZoomLevel}
+      connectionMode={ConnectionMode.Loose}
+    >
+      <Background />
+      <Controls>
+        <RearrangeButton />
+        <MinimapButton />
+      </Controls>
+      {map}
+    </ReactFlow>
   );
 }
 
 const Viewer = () => (
   <ReactFlowProvider>
+    <ERMarkers />
     <ERViewer />
   </ReactFlowProvider>
 );
