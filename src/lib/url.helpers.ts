@@ -7,6 +7,7 @@ export function getCodeFromUrl() {
 }
 
 export function setCodeInUrl(code: string) {
+  console.log("setCodeInUrl", code);
   setUrlB64Param(codeParam, code);
 }
 
@@ -32,22 +33,19 @@ export function setUrlB64Param(key: string, value: string) {
   }
 
   const url = new URL(window.location.href);
-  url.searchParams.set(key, uriComponent);
-  let urlString = urlToCleanString(url);
+  console.log("searchParams", url.searchParams);
 
+  url.searchParams.set(key, uriComponent);
+  let urlString = url.toString();
+  console.log("urlString", urlString);
   // remove the param if it's too long
   if (urlString.length > 32767) {
     console.error("URL param too long", key, uriComponent.length);
     success = false;
     url.searchParams.delete(key);
-    urlString = urlToCleanString(url);
   }
 
-  window.history.pushState(null, "", urlToCleanString(url));
+  window.history.pushState(null, "", url);
 
   return success;
-}
-
-export function urlToCleanString(url: URL) {
-  return url.origin + url.pathname + url.hash + url.search;
 }
