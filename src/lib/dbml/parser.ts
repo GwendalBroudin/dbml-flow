@@ -112,7 +112,7 @@ export function guessSize(table: Table) {
   };
 }
 
-const positionStoreRegex = /\n\/\*\s*<posistions>(.*)<\/positions>\s*\*\//m;
+const positionStoreRegex = /\n?\/\*\s*<posistions>(.*)<\/positions>\s*\*\//m;
 
 export function extractPositions(code: string) {
   const positionMatch = positionStoreRegex.exec(code);
@@ -131,9 +131,12 @@ export function setPositionsInCode(
   const start = positionMatch?.index ?? code.length;
   const end = start + (positionMatch?.[0].length ?? 0);
 
-  return (
-    code.substring(0, start) +
-    `\n/*<posistions>${JSON.stringify(savedPositions)}</positions>*/` +
-    code.substring(end)
-  );
+  const hasValue = savedPositions && Object.keys(savedPositions).length;
+  const positionsString = hasValue
+    ? `${start > 0 ? "\n" : ""}/*<posistions>${JSON.stringify(
+        savedPositions
+      )}</positions>*/`
+    : "";
+
+  return code.substring(0, start) + positionsString + code.substring(end);
 }
