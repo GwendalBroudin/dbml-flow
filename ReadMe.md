@@ -1,10 +1,10 @@
 # Todo
 
 ## Viewer
-- [ ] Floating edges 
+- [x] Floating edges 
 - [ ] Edge labels
 - [ ] Edge hover
-- [ ] Edge heads (one-optionnal, one, many) + label
+- [x] Edge heads (one-optionnal, one, many) + label
 - [ ] Groups 
 - [ ] Show relation fields only
 - [ ] Show table header only

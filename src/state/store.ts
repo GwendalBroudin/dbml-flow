@@ -23,21 +23,20 @@ import {
   parser,
   setPositionsInCode,
 } from "@/lib/dbml/parser";
+import {
+  computeEdgesRelativeData,
+  EdgesRelativeData,
+} from "@/lib/flow/edges.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import {
   applySavedPositions,
-  getEdgePositions,
-  toNodeIndex,
+  toNodeIndex
 } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
-import {
-  computeEdgesRelativeData,
-  EdgesRelativeData,
-} from "@/lib/flow/edges.helpers";
 
 // Helper type for parse results
 type ParseResult =

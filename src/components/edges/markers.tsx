@@ -1,4 +1,5 @@
 export const ERMarkerTypes = {
+  none: "none",
   oneOptionnal: "one-optionnal",
   one: "one",
   many: "many",

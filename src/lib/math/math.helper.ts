@@ -134,15 +134,15 @@ export function getEdgePositions(source: InternalNode, target: InternalNode) {
 export function distributeCenter(
   center: number,
   range: number,
-  number: number,
+  length: number,
   index: number
 ) {
-  const divider = (number % 2 === 0 ? number : number - 1) ?? 1;
+  const divider = (length % 2 === 0 ? length : length - 1) ?? 1;
 
   const step = (range * 2) / divider;
 
   let min = center - range;
-  if (number % 2 === 0) {
+  if (length % 2 === 0) {
     min += step / 2;
   }
 

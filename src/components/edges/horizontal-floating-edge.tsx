@@ -5,6 +5,7 @@ import useStore from "@/state/store";
 import { getSmoothStepPath } from "@xyflow/react";
 import { useMemo } from "react";
 import { markerWidth } from "./markers";
+import { distributeMarkers, getMarkerType } from "@/lib/flow/edges.helpers";
 
 export const HorizontalFloatingEdgeTypeName = "horizontal-floating";
 
@@ -19,13 +20,12 @@ function HorizontalFloatingEdge({
   sourceHandleId,
   markerStart,
   markerEnd,
+  animated,
   ...props
 }: EdgeProps) {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
   const { edgesRelativeData } = useStore();
-
-
 
   const [edgePath] = useMemo(() => {
     if (!sourceNode || !targetNode) {
@@ -36,17 +36,29 @@ function HorizontalFloatingEdge({
     if (!positionData) return [null];
 
     const { sourcePos, targetPos } = positionData;
-    const [sx, sy] = getHandleCoords(sourceNode, sourceHandleId!, sourcePos);
-    const [tx, ty] = getHandleCoords(targetNode, targetHandleId!, targetPos);
-    const offsetH = markerWidth -4;
+    let [sx, sy] = getHandleCoords(sourceNode, sourceHandleId!, sourcePos);
+    let [tx, ty] = getHandleCoords(targetNode, targetHandleId!, targetPos);
+    const offsetH = markerWidth - 4;
+
+
+    // calc y positions depending on number of different relation types per handle and their positions
+    const sourceSibling = edgesRelativeData?.siblings?.[sourceHandleId!];
+    if (sourceSibling) {
+      const markerType = getMarkerType(markerStart!);
+      sy = distributeMarkers(sy, markerType, sourceSibling[sourcePos as "right" | "left"]?.markerCountMap)
+    }
+    const targetSibling = edgesRelativeData?.siblings?.[targetHandleId!];
+    if (targetSibling) {
+      const markerType = getMarkerType(markerEnd!);
+      ty = distributeMarkers(ty, markerType, targetSibling[targetPos as "right" | "left"]?.markerCountMap)
+    }
+
     return getSmoothStepPath({
       // offset to the left or right depending on the source position
       sourceX: sx + (sourcePos === "left" ? -offsetH : offsetH),
-      // calc number depending on number of different relation types per handle
-      // sourceY: distributeCenter(sy, 10, 3, props.data.index),
       sourceY: sy,
       // offset to the left or right depending on the target position
-      targetX: tx + (targetPos === "left" ? -offsetH : offsetH), 
+      targetX: tx + (targetPos === "left" ? -offsetH : offsetH),
       targetY: ty,
       sourcePosition: sourcePos,
       targetPosition: targetPos,

@@ -1,8 +1,10 @@
-import { Edge, Node, Position } from "@xyflow/react";
+import { Edge, EdgeMarkerType, Node, Position } from "@xyflow/react";
 import {
   RelativePositionData,
+  distributeCenter,
   getNodesRelativePosition,
 } from "../math/math.helper";
+import { ERMarkerTypes } from "@/components/edges/markers";
 
 export type EdgesRelativeData = {
   positions: EdgePositionsIndex;
@@ -13,11 +15,18 @@ export type EdgePositionsIndex = {
   [edgeId: string]: RelativePositionData;
 };
 
+type SiblingEdgeSideData = {
+  edgeIds: string[];
+  markerCountMap: Record<string, number>;
+};
+
+export type EdgeSiblingData = {
+  right: SiblingEdgeSideData;
+  left: SiblingEdgeSideData;
+};
+
 export type EdgesSiblingsIndex = {
-  [handleId: string]: {
-    right: string[];
-    left: string[];
-  };
+  [handleId: string]: EdgeSiblingData;
 };
 
 export function computeEdgesRelativeData<
@@ -48,12 +57,10 @@ export function computeEdgesRelativeData<
 
     data.positions[edge.id] = positions;
 
-    const sourceKey = edge.sourceHandle + positions.sourcePos;
-    const targetKey = edge.targetHandle + positions.targetPos;
-
     assignEdgesSiblingsIndexValue(
       edge.sourceHandle ?? edge.source,
       edge.id,
+      edge.markerStart,
       positions.sourcePos,
       data.siblings
     );
@@ -61,6 +68,7 @@ export function computeEdgesRelativeData<
     assignEdgesSiblingsIndexValue(
       edge.targetHandle ?? edge.target,
       edge.id,
+      edge.markerEnd,
       positions.targetPos,
       data.siblings
     );
@@ -76,21 +84,73 @@ export function computeEdgesRelativeData<
     };
   });
 
+  console.log("edgesRelativeData", data);
+
   return data;
+}
+
+export function distributeMarkers(value: number, markerType: string, siblings: SiblingEdgeSideData['markerCountMap'], range = 10) {
+  const entries = Object.entries(siblings).filter(([_, value]) => value > 0);
+
+  if(!entries.length || entries.length === 1) return value;
+
+  const index = entries.findIndex(([key]) => key === markerType);
+  console.log({length: entries.length, index, markerType, siblings})
+  return distributeCenter(value, 10, entries.length, index);
+}
+
+//TODO: hanlde parameter by using regex
+export function getMarkerType(marker: string){
+  return marker.replace("url('#", "").replace("')", "");
 }
 
 function assignEdgesSiblingsIndexValue(
   key: string,
   edgeId: string,
+  marker: EdgeMarkerType | undefined,
   position: Position,
   index: EdgesSiblingsIndex
 ) {
-  index[key] ??= {
-    right: [],
-    left: [],
-  };
+  index[key] ??= initSiblingIndex();
 
   const indexValue = index[key];
   const positionKey = position as "right" | "left";
-  indexValue[positionKey].push(edgeId);
+  const data = indexValue[positionKey];
+  data.edgeIds.push(edgeId);
+  data.markerCountMap[getMarkerName(marker)] += 1;
+}
+
+function getMarkerName(marker: EdgeMarkerType | undefined) {
+  if (!marker) return ERMarkerTypes.none;
+  else if (typeof marker === "string") return marker;
+
+  return marker.type;
+}
+
+/**
+ * This ensure that those markers are sorted in the same order as the ERMarkerTypes
+ */
+export const sortedMarkerTypes = [
+  ERMarkerTypes.none,
+  ERMarkerTypes.oneOptionnal,
+  ERMarkerTypes.one,
+  ERMarkerTypes.many,
+] as const;
+
+function initSiblingIndex() {
+  const markerCountMap = sortedMarkerTypes.reduce((acc, marker) => {
+    acc[marker] = 0;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return <EdgeSiblingData>{
+    right: {
+      edgeIds: [],
+      markerCountMap: { ...markerCountMap },
+    },
+    left: {
+      edgeIds: [],
+      markerCountMap: { ...markerCountMap },
+    }
+  };
 }
