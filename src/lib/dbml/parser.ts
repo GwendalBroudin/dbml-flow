@@ -8,19 +8,15 @@ import {
 } from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Database from "@dbml/core/types/model_structure/database";
+import Endpoint from "@dbml/core/types/model_structure/endpoint";
 import Field from "@dbml/core/types/model_structure/field";
 import Ref from "@dbml/core/types/model_structure/ref";
 import Table from "@dbml/core/types/model_structure/table";
-import { Edge, type Node } from "@xyflow/react";
 
+//#region DBML to Nodes and Edges
 export type RefDic = { [k: string]: Ref[] };
 
 export const parser = new Parser();
-
-export async function getTestDbml() {
-  const dbmlReq = await fetch("test-data/test.private.dbml");
-  return await dbmlReq.text();
-}
 
 export function getNodeAndEdgesFromDbml(dbml: string) {
   try {
@@ -32,18 +28,7 @@ export function getNodeAndEdgesFromDbml(dbml: string) {
     return { error: e };
   }
 }
-
 export function parseDatabaseToNodesAndEdges(database: Database) {
-  const refsByTable = database.schemas
-    .flatMap((e) => e.refs)
-    .reduce((acc, ref) => {
-      for (const endpoint of ref.endpoints) {
-        const tableId = getTableId(endpoint.fields[0].table);
-        acc[tableId] = [...(acc[tableId] ?? []), ref];
-      }
-      return acc;
-    }, {} as RefDic);
-
   const tables = database.schemas.flatMap((s) => s.tables);
 
   const refs = database.schemas.flatMap((s) => s.refs);
@@ -54,12 +39,6 @@ export function parseDatabaseToNodesAndEdges(database: Database) {
   };
 }
 
-export function getTableId(table: Table) {
-  return `${table.schema.name}.${table.name}`;
-}
-export function getFieldId(e: Field) {
-  return `${getTableId(e.table)}.${e.name}`;
-}
 export function mapToNode(table: Table) {
   const tableId = getTableId(table);
 
@@ -74,13 +53,14 @@ export function mapToNode(table: Table) {
     guessed: guessSize(table),
   };
 }
-
 export function mapToEdge(ref: Ref) {
   const sourceEndPoint = ref.endpoints[0];
   const targetEndPoint = ref.endpoints[1];
 
-  const sourcefieldId = getFieldId(sourceEndPoint.fields[0]);
-  const targetfieldId = getFieldId(targetEndPoint.fields[0]);
+  const sourceField = sourceEndPoint.fields[0];
+  const sourcefieldId = getFieldId(sourceField);
+  const targetField = targetEndPoint.fields[0];
+  const targetfieldId = getFieldId(targetField);
   return <TableEdgeType>{
     id: ref.id.toString(),
     source: getTableId(sourceEndPoint.fields[0].table),
@@ -88,8 +68,8 @@ export function mapToEdge(ref: Ref) {
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
-    markerStart: ERMarkerTypes.one,
-    markerEnd: ERMarkerTypes.many,
+    markerStart: getRelationMarker(sourceEndPoint, targetField) ,
+    markerEnd: getRelationMarker(targetEndPoint, sourceField),
     data: {
       sourcefieldId,
       targetfieldId,
@@ -97,6 +77,45 @@ export function mapToEdge(ref: Ref) {
     },
   };
 }
+// #endregion
+
+//#region helpers
+export function getRelationMarker(
+  endPoint: Endpoint,
+  targetfield : Field
+): string {
+  if(endPoint.relation === "1" && isNotNull(targetfield)) {
+    return ERMarkerTypes.one;
+  } else if (endPoint.relation === "1") {
+    return ERMarkerTypes.oneOptionnal;
+  } else if (endPoint.relation === "*") {
+    return ERMarkerTypes.many;
+  }
+
+  throw new Error("Unknown relation type");
+}
+export function getTableId(table: Table) {
+  return `${table.schema.name}.${table.name}`;
+}
+export function getFieldId(e: Field) {
+  return `${getTableId(e.table)}.${e.name}`;
+}
+
+export function isNotNull(
+  field: Field
+): boolean {
+  const table = field.table;
+  return (
+    field.not_null ||
+    field.pk ||
+    table.indexes?.find((i) =>
+      i.columns.some((c) => c.value === field.name)
+    )?.pk as unknown as boolean
+  );
+}
+// #endregion
+
+// #region size guesser
 
 // Guess size function for nodes
 const headerHeight = 39;
@@ -115,6 +134,9 @@ export function guessSize(table: Table) {
     height: table.fields.length * fieldHeight + headerHeight + 20,
   };
 }
+// #endregion
+
+//#region Position Store
 
 const positionStoreRegex = /\n?\/\*\s*<posistions>(.*)<\/positions>\s*\*\//m;
 
@@ -144,3 +166,5 @@ export function setPositionsInCode(
 
   return code.substring(0, start) + positionsString + code.substring(end);
 }
+
+// #endregion
