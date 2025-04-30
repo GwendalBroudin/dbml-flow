@@ -1,6 +1,6 @@
 import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
-import { ERMarkerTypes } from "@/components/edges/markers";
 import {
+  ERRelationTypes,
   GuessedSize,
   NodePositionIndex,
   TableEdgeType,
@@ -61,6 +61,9 @@ export function mapToEdge(ref: Ref) {
   const sourcefieldId = getFieldId(sourceField);
   const targetField = targetEndPoint.fields[0];
   const targetfieldId = getFieldId(targetField);
+
+  const sourceRelationType = getRelationType(sourceEndPoint, targetField);
+  const targetRelationType = getRelationType(targetEndPoint, sourceField);
   return <TableEdgeType>{
     id: ref.id.toString(),
     source: getTableId(sourceEndPoint.fields[0].table),
@@ -68,28 +71,30 @@ export function mapToEdge(ref: Ref) {
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
-    markerStart: getRelationMarker(sourceEndPoint, targetField) ,
-    markerEnd: getRelationMarker(targetEndPoint, sourceField),
+    markerStart: sourceRelationType ,
+    markerEnd: targetRelationType,
     data: {
       sourcefieldId,
       targetfieldId,
       ref,
+      sourceRelationType,
+      targetRelationType,
     },
   };
 }
 // #endregion
 
 //#region helpers
-export function getRelationMarker(
+export function getRelationType(
   endPoint: Endpoint,
   targetfield : Field
-): string {
+): ERRelationTypes {
   if(endPoint.relation === "1" && isNotNull(targetfield)) {
-    return ERMarkerTypes.one;
+    return "one" ;
   } else if (endPoint.relation === "1") {
-    return ERMarkerTypes.oneOptionnal;
+    return "oneOptionnal";
   } else if (endPoint.relation === "*") {
-    return ERMarkerTypes.many;
+    return "many";
   }
 
   throw new Error("Unknown relation type");

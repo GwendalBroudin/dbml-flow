@@ -1,9 +1,16 @@
 export const ERMarkerTypes = {
   none: "none",
-  oneOptionnal: "one-optionnal",
   one: "one",
+  oneOptionnal: "oneOptionnal",
   many: "many",
-};
+} as const;
+
+export const ERMakerLabels = {
+  none: "",
+  one: "1",
+  oneOptionnal: "0..1",
+  many: "*",
+} as const;
 
 export type ERMarkerProps = {
   color?: string;

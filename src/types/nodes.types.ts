@@ -10,10 +10,14 @@ export type TableNodeData = {
 
 export type TableNodeType = Node<TableNodeData, "table">;
 
+export type ERRelationTypes = "oneOptionnal" | "one" | "many";
+
 export type TableEdgeData = {
   sourcefieldId: string;
   targetfieldId: string;
   ref: Ref;
+  sourceRelationType: ERRelationTypes;
+  targetRelationType: ERRelationTypes;
 };
 
 export type TableEdgeType = Edge<TableEdgeData>;
