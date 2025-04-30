@@ -119,13 +119,7 @@ export function EdgeLabels({
 
   const tableEdgeData = data as TableEdgeData;
   const ref = tableEdgeData?.ref;
-  const label =
-    ref?.name ??
-    ref?.endpoints
-      .flatMap((e) => e.fields)
-      .map((f) => f.table.name)
-      .join("_") ??
-    "";
+  const label = ref?.name ?? "";
   const sourceLabel =
     ERMakerLabels[tableEdgeData?.sourceRelationType ?? "none"];
   const targetLabel =
