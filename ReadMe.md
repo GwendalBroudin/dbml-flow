@@ -9,8 +9,12 @@
 - [ ] Groups 
 - [ ] Show relation fields only
 - [ ] Show table header only
-- [ ] Notes 
 - [ ] Enums 
+
+## Notes 
+- [ ] Floating Notes 
+- [ ] Table Notes
+- [ ] Field Notes
 
 ## Editor 
 - [ ] Color picker
