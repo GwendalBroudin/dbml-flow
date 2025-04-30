@@ -11,7 +11,7 @@ export type ERMarkerProps = {
 export default function ERMarkers({ color }: ERMarkerProps) {
   color ??= "#b1b1b7";
   return (
-    <svg style={{ position: "absolute", top: 0, left: 0 }}>
+    <svg style={{ position: "absolute", height: 0, width: 0 }}>
       <defs>
         <marker
           id={ERMarkerTypes.oneOptionnal}
@@ -33,6 +33,7 @@ export default function ERMarkers({ color }: ERMarkerProps) {
           markerWidth={20}
           markerHeight={10}
           fill="none"
+          stroke={color}
           orient="auto-start-reverse"
         >
           <path d="m0 5L20 5M10 1 10 9" />

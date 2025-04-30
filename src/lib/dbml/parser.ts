@@ -88,8 +88,8 @@ export function mapToEdge(ref: Ref) {
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
+    markerStart: ERMarkerTypes.one,
     markerEnd: ERMarkerTypes.many,
-    markerStart: ERMarkerTypes.many,
     data: {
       sourcefieldId,
       targetfieldId,

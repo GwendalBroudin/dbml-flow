@@ -1,9 +1,9 @@
 import { BaseEdge, EdgeProps, useInternalNode } from "@xyflow/react";
 
-import { getSmoothStepPath } from "@xyflow/react";
+import { getHandleCoords } from "@/lib/math/math.helper";
 import useStore from "@/state/store";
+import { getSmoothStepPath } from "@xyflow/react";
 import { useMemo } from "react";
-import { getEdgeParams, getHandleCoords } from "@/lib/math/math.helper";
 
 export const HorizontalFloatingEdgeTypeName = "horizontal-floating";
 
@@ -14,25 +14,29 @@ function HorizontalFloatingEdge({
   style,
   targetHandleId,
   sourceHandleId,
+  markerStart,
+  markerEnd,
   ...props
 }: EdgeProps) {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
   const { edgesRelativeData } = useStore();
 
-  if (!sourceNode || !targetNode) {
-    return null;
-  }
+  
 
-  const positionData = edgesRelativeData?.positions?.[id];
-  if (!positionData) return null;
+  const [edgePath] = useMemo(() => {
+    if (!sourceNode || !targetNode) {
+      return [null];
+    }
+  
+    const positionData = edgesRelativeData?.positions?.[id];
+    if (!positionData) return [null];
+  
+    const { sourcePos, targetPos } = positionData;
+    const [sx, sy] = getHandleCoords(sourceNode, sourceHandleId!, sourcePos);
+    const [tx, ty] = getHandleCoords(targetNode, targetHandleId!, targetPos);
 
-  const { sourcePos, targetPos } = positionData;
-  const [sx, sy] = getHandleCoords(sourceNode, sourceHandleId!, sourcePos);
-  const [tx, ty] = getHandleCoords(targetNode, targetHandleId!, targetPos);
-
-  return useMemo(() => {
-    const [edgePath] = getSmoothStepPath({
+    return getSmoothStepPath({
       sourceX: sx,
       // calc number depending on number of different relation types per handle
       // sourceY: distributeCenter(sy, 10, 3, props.data.index),
@@ -41,24 +45,27 @@ function HorizontalFloatingEdge({
       targetPosition: targetPos,
       targetX: tx,
       targetY: ty,
-      offset: 5,
+      offset: -20,
     });
+  }, [sourceNode, targetNode, edgesRelativeData]);
 
-    return (
-      <BaseEdge
-        path={edgePath}
-        id={id}
-        d={edgePath}
-        strokeWidth={5}
-        style={style}
-        markerEnd={props.markerEnd}
-        markerStart={props.markerStart}
+  if (!edgePath) {
+    return null;
+  }
 
-        //cause error React does not recognize the `pathOptions` prop etc...
-        // {...props}
-      />
-    );
-  }, [sourcePos, targetPos, sx, sy, tx, ty]);
+  return (
+    <BaseEdge
+      path={edgePath}
+      id={id}
+      strokeWidth={5}
+      style={style}
+      markerStart={markerStart}
+      markerEnd={markerEnd}
+      
+    //cause error React does not recognize the `pathOptions` prop etc...
+    // {...props}
+    />
+  );
 }
 
 export default HorizontalFloatingEdge;
