@@ -4,6 +4,7 @@
 - [x] Floating edges 
 - [ ] Edge labels
 - [ ] Edge hover
+- [x] Edge heads distribution
 - [x] Edge heads (one-optionnal, one, many) + label
 - [ ] Groups 
 - [ ] Show relation fields only
