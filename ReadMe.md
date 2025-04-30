@@ -2,7 +2,7 @@
 
 ## Viewer
 - [x] Floating edges 
-- [ ] Edge labels
+- [x] Edge labels
 - [ ] Edge hover
 - [x] Edge heads distribution
 - [x] Edge heads (one-optionnal, one, many) + label
@@ -24,7 +24,8 @@
 
 ## Misc
 - [ ] Generate svg, png
-- [ ] Hide editor / viewer mode
+- [ ] Hide editor 
+- [x] Viewer mode
 - [ ] Download dbml file from url (add warning when try to modify code)
 
 

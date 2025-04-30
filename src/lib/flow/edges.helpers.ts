@@ -84,8 +84,6 @@ export function computeEdgesRelativeData<
     };
   });
 
-  console.log("edgesRelativeData", data);
-
   return data;
 }
 
@@ -95,7 +93,6 @@ export function distributeMarkers(value: number, markerType: string, siblings: S
   if(!entries.length || entries.length === 1) return value;
 
   const index = entries.findIndex(([key]) => key === markerType);
-  console.log({length: entries.length, index, markerType, siblings})
   return distributeCenter(value, 10, entries.length, index);
 }
 
