@@ -34,3 +34,13 @@ export type GuessedSize = {
 };
 
 export type NodeWithGuessedSize = Node & GuessedSize;
+
+export type NodeGroupData = {
+  id: string;
+  label: string;
+  nodeIds: string[];
+};
+
+export type GroupNodeType = Node<NodeGroupData, "group">;
+
+export type NodeType = TableNodeType | GroupNodeType;

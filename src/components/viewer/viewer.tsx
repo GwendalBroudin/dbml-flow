@@ -18,11 +18,11 @@ import {
 import "@xyflow/react/dist/style.css";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
-import { getNodeColor } from "./viewer.helper";
 import HorizontalFloatingEdge, {
   HorizontalFloatingEdgeTypeName,
 } from "../edges/horizontal-floating-edge";
 import ERMarkers from "../edges/markers";
+import { getNodeColor } from "./viewer.helper";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -38,6 +38,7 @@ const selector = (state: AppState) => ({
 
 const nodeTypes = {
   table: TableNode,
+  // group: NodeGroup,
 };
 
 const edgeTypes = {

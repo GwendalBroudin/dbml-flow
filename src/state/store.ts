@@ -19,7 +19,7 @@ import { create } from "zustand";
 import { StartupCode } from "@/components/editor/editor.constant";
 import {
   extractPositions,
-  parseDatabaseToNodesAndEdges,
+  parseDatabaseToGraph,
   parser,
   setPositionsInCode,
 } from "@/lib/dbml/parser";
@@ -28,12 +28,13 @@ import {
   EdgesRelativeData,
 } from "@/lib/flow/edges.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
-import {
-  applySavedPositions,
-  toNodeIndex
-} from "@/lib/layout/layout.helpers";
+import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
-import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
+import {
+  NodePositionIndex,
+  NodeType,
+  TableNodeType,
+} from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
@@ -53,7 +54,7 @@ export type AppState = {
   firstRender: boolean;
 
   // ReactFlow state
-  nodes: TableNodeType[];
+  nodes: NodeType[];
   edges: Edge[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
@@ -150,7 +151,7 @@ const useStore = create<AppState>((set, get) => ({
     const { savedPositions: initialSavedPositions, setSavedPositions } = get();
 
     // Get initial layout
-    let { nodes, edges } = parseDatabaseToNodesAndEdges(database);
+    let { nodes, edges } = parseDatabaseToGraph(database);
 
     const savedPositions = initialSavedPositions;
 

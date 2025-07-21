@@ -1,10 +1,11 @@
 import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
 import {
   ERRelationTypes,
+  GroupNodeType,
   GuessedSize,
   NodePositionIndex,
   TableEdgeType,
-  TableNodeType,
+  TableNodeType
 } from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Database from "@dbml/core/types/model_structure/database";
@@ -12,6 +13,7 @@ import Endpoint from "@dbml/core/types/model_structure/endpoint";
 import Field from "@dbml/core/types/model_structure/field";
 import Ref from "@dbml/core/types/model_structure/ref";
 import Table from "@dbml/core/types/model_structure/table";
+import TableGroup from "@dbml/core/types/model_structure/tableGroup";
 
 //#region DBML to Nodes and Edges
 export type RefDic = { [k: string]: Ref[] };
@@ -23,23 +25,53 @@ export function getNodeAndEdgesFromDbml(dbml: string) {
     const database = parser.parse(dbml, "dbmlv2");
     console.log("database", database);
 
-    return parseDatabaseToNodesAndEdges(database);
+    return parseDatabaseToGraph(database);
   } catch (e) {
     return { error: e };
   }
 }
-export function parseDatabaseToNodesAndEdges(database: Database) {
+export function parseDatabaseToGraph(database: Database) {
   const tables = database.schemas.flatMap((s) => s.tables);
 
   const refs = database.schemas.flatMap((s) => s.refs);
+  const groups = database.schemas.flatMap((s) => s.tableGroups);
+
+  const groupNodes = groups.map((g) => mapToGroupNode(g));
+  const nodes = tables.map((t, i) => mapTableToNode(t));
+
+  nodes.forEach((n) => {
+    const parent = groupNodes.find((g) => g.data.nodeIds.includes(n.id));
+    if (parent) {
+      n.parentId = parent.id;
+      // n.extent = "parent";
+    }
+  });
 
   return {
-    nodes: tables.map((t, i) => mapToNode(t)),
+    nodes: [...groupNodes, ...nodes],
     edges: refs.map((r) => mapToEdge(r)),
+    groups: groupNodes.map((g) => g.data),
   };
 }
 
-export function mapToNode(table: Table) {
+function mapToGroupNode(g: TableGroup) {
+  return <GroupNodeType & GuessedSize>{
+    id: `${g.schema.name}.${g.name}`,
+    type: "group",
+    data: {
+      label: g.name,
+      nodeIds: g.tables.map(getTableId),
+
+    },
+    position: { x: 100, y: 100 },
+    guessed: {
+      width: 172 * g.tables.length + 20 * (g.tables.length - 1),
+      height: 200 + 20 * 2,
+    },
+  };
+}
+
+export function mapTableToNode(table: Table) {
   const tableId = getTableId(table);
 
   return <TableNodeType & GuessedSize>{
@@ -53,6 +85,7 @@ export function mapToNode(table: Table) {
     guessed: guessSize(table),
   };
 }
+
 export function mapToEdge(ref: Ref) {
   const sourceEndPoint = ref.endpoints[0];
   const targetEndPoint = ref.endpoints[1];
@@ -71,7 +104,7 @@ export function mapToEdge(ref: Ref) {
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
-    markerStart: sourceRelationType ,
+    markerStart: sourceRelationType,
     markerEnd: targetRelationType,
     data: {
       sourcefieldId,
@@ -87,10 +120,10 @@ export function mapToEdge(ref: Ref) {
 //#region helpers
 export function getRelationType(
   endPoint: Endpoint,
-  targetfield : Field
+  targetfield: Field
 ): ERRelationTypes {
-  if(endPoint.relation === "1" && isNotNull(targetfield)) {
-    return "one" ;
+  if (endPoint.relation === "1" && isNotNull(targetfield)) {
+    return "one";
   } else if (endPoint.relation === "1") {
     return "oneOptionnal";
   } else if (endPoint.relation === "*") {
@@ -106,16 +139,13 @@ export function getFieldId(e: Field) {
   return `${getTableId(e.table)}.${e.name}`;
 }
 
-export function isNotNull(
-  field: Field
-): boolean {
+export function isNotNull(field: Field): boolean {
   const table = field.table;
   return (
     field.not_null ||
     field.pk ||
-    table.indexes?.find((i) =>
-      i.columns.some((c) => c.value === field.name)
-    )?.pk as unknown as boolean
+    (table.indexes?.find((i) => i.columns.some((c) => c.value === field.name))
+      ?.pk as unknown as boolean)
   );
 }
 // #endregion

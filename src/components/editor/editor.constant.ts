@@ -132,4 +132,11 @@ Ref: ecommerce.product_tags.id <> ecommerce.products.id // many-to-many
 //composite foreign key
 Ref: ecommerce.merchant_periods.(merchant_id, country_code) > ecommerce.merchants.(id, country_code)
 Ref user_orders: ecommerce.orders.user_id > public.users.id
+
+TableGroup ecommerce {
+  ecommerce.merchants
+  ecommerce.merchant_periods
+  ecommerce.products
+  ecommerce.product_tags
+}
   `;

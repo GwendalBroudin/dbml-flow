@@ -3,7 +3,7 @@
   "type": "module",
   "homepage": "https://gwendalbroudin.github.io/dbml-flow",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "predeploy": "tsc && vite build ",
