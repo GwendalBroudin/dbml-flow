@@ -1,15 +1,20 @@
 # Todo
 
 ## Viewer
-- [ ] Floating edges 
-- [ ] Edge labels
+- [x] Floating edges 
+- [x] Edge labels
 - [ ] Edge hover
-- [ ] Edge heads (one-optionnal, one, many) + label
+- [x] Edge heads distribution
+- [x] Edge heads (one-optionnal, one, many) + label
 - [ ] Groups 
 - [ ] Show relation fields only
 - [ ] Show table header only
-- [ ] Notes 
 - [ ] Enums 
+
+## Notes 
+- [ ] Floating Notes 
+- [ ] Table Notes
+- [ ] Field Notes
 
 ## Editor 
 - [ ] Color picker
@@ -19,7 +24,8 @@
 
 ## Misc
 - [ ] Generate svg, png
-- [ ] Hide editor / viewer mode
+- [ ] Hide editor 
+- [x] Viewer mode
 - [ ] Download dbml file from url (add warning when try to modify code)
 
 

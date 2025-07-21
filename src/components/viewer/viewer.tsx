@@ -6,6 +6,7 @@ import { useShallow } from "zustand/react/shallow";
 import { TableNode } from "@/components/table-node";
 import {
   Background,
+  ConnectionMode,
   Controls,
   MiniMap,
   ReactFlow,
@@ -18,6 +19,10 @@ import "@xyflow/react/dist/style.css";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
 import { getNodeColor } from "./viewer.helper";
+import HorizontalFloatingEdge, {
+  HorizontalFloatingEdgeTypeName,
+} from "../edges/horizontal-floating-edge";
+import ERMarkers from "../edges/markers";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -25,8 +30,6 @@ const selector = (state: AppState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
-  setNodes: state.setNodes,
-  setEdges: state.setEdges,
   onChange: state.onChange,
   minimap: state.minimap,
   firstRender: state.firstRender,
@@ -35,6 +38,10 @@ const selector = (state: AppState) => ({
 
 const nodeTypes = {
   table: TableNode,
+};
+
+const edgeTypes = {
+  [HorizontalFloatingEdgeTypeName]: HorizontalFloatingEdge,
 };
 
 export type FlowProps = {} & React.ComponentProps<typeof ReactFlow>;
@@ -77,11 +84,13 @@ function ERViewer({ className, ...props }: FlowProps) {
       nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       fitView
       minZoom={minZoomLevel}
+      connectionMode={ConnectionMode.Loose}
     >
       <Background />
       <Controls>
@@ -95,6 +104,7 @@ function ERViewer({ className, ...props }: FlowProps) {
 
 const Viewer = () => (
   <ReactFlowProvider>
+    <ERMarkers />
     <ERViewer />
   </ReactFlowProvider>
 );

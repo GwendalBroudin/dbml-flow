@@ -23,11 +23,14 @@ import {
   parser,
   setPositionsInCode,
 } from "@/lib/dbml/parser";
+import {
+  computeEdgesRelativeData,
+  EdgesRelativeData,
+} from "@/lib/flow/edges.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import {
   applySavedPositions,
-  getEdgePositions,
-  toNodeIndex,
+  toNodeIndex
 } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
@@ -54,7 +57,7 @@ export type AppState = {
   edges: Edge[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
-
+  edgesRelativeData: EdgesRelativeData;
   //initialisation
   initState: () => void;
 
@@ -108,6 +111,7 @@ const useStore = create<AppState>((set, get) => ({
   minimap: false,
   savePositionsInCode: true,
   firstRender: true,
+  edgesRelativeData: {} as EdgesRelativeData,
 
   initState: () => {
     const code = getCodeFromUrl() || StartupCode;
@@ -183,9 +187,10 @@ const useStore = create<AppState>((set, get) => ({
 
   onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
     const nodes = applyNodeChanges(changes, get().nodes);
-    const edges = getEdgePositions(get().edges, nodes);
+    // const edges = getEdgePositions(get().edges, nodes);
+    const edgesRelativeData = computeEdgesRelativeData(nodes, get().edges);
     get().setSavedPositions(nodes);
-    set({ nodes, edges });
+    set({ nodes, edgesRelativeData });
   },
   onEdgesChange: (changes: EdgeChange[]) => {
     set({
