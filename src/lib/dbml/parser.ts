@@ -5,7 +5,7 @@ import {
   GuessedSize,
   NodePositionIndex,
   TableEdgeType,
-  TableNodeType
+  TableNodeType,
 } from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Database from "@dbml/core/types/model_structure/database";
@@ -36,8 +36,13 @@ export function parseDatabaseToGraph(database: Database) {
   const refs = database.schemas.flatMap((s) => s.refs);
   const groups = database.schemas.flatMap((s) => s.tableGroups);
 
-  const groupNodes = groups.map((g) => mapToGroupNode(g));
-  const nodes = tables.map((t, i) => mapTableToNode(t));
+  const nodes = tables.map((t) => mapTableToNode(t));
+  const nodesById = nodes.reduce((acc, n) => {
+    acc[n.id] = n;
+    return acc;
+  }, {} as Record<string, TableNodeType>);
+
+  const groupNodes = groups.map((g) => mapToGroupNode(g, nodesById));
 
   nodes.forEach((n) => {
     const parent = groupNodes.find((g) => g.data.nodeIds.includes(n.id));
@@ -54,16 +59,27 @@ export function parseDatabaseToGraph(database: Database) {
   };
 }
 
-function mapToGroupNode(g: TableGroup) {
+export const paddingX = 20;
+export const paddingY = 20;
+
+function mapToGroupNode(g: TableGroup, nodes: Record<string, TableNodeType>) {
+  const childNodes = g.tables.map(getTableId).map((id) => nodes[id]);
+  const initialWidth =
+    childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
+    (childNodes.length - 1) * paddingX;
+  const initialHeight =
+    childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
+
   return <GroupNodeType & GuessedSize>{
     id: `${g.schema.name}.${g.name}`,
     type: "group",
     data: {
       label: g.name,
       nodeIds: g.tables.map(getTableId),
-
     },
-    position: { x: 100, y: 100 },
+    initialWidth,
+    initialHeight,
+    // position: { x: 100, y: 100 },
     guessed: {
       width: 172 * g.tables.length + 20 * (g.tables.length - 1),
       height: 200 + 20 * 2,
@@ -74,15 +90,19 @@ function mapToGroupNode(g: TableGroup) {
 export function mapTableToNode(table: Table) {
   const tableId = getTableId(table);
 
+  const guessed = guessSize(table);
   return <TableNodeType & GuessedSize>{
     id: tableId,
     type: "table",
     data: {
       table,
       label: table.name,
+      guessed,
     },
+    initialWidth: guessed.width,
+    initialHeight: guessed.height,
     position: { x: 0, y: 0 },
-    guessed: guessSize(table),
+    guessed,
   };
 }
 
@@ -153,10 +173,12 @@ export function isNotNull(field: Field): boolean {
 // #region size guesser
 
 // Guess size function for nodes
-const headerHeight = 39;
-const fieldHeight = 28;
+const headerHeight = 40;
+const fieldHeight = 30;
 
-const fontSize = 14;
+const fontSize = 11; // should be 14 but gets better approximations
+
+const inlinePadding = 12;
 
 export function guessSize(table: Table) {
   const longestField = table.fields
@@ -165,8 +187,8 @@ export function guessSize(table: Table) {
       return e.length > longest.length ? e : longest;
     }, "");
   return {
-    width: longestField.length * fontSize,
-    height: table.fields.length * fieldHeight + headerHeight + 20,
+    width: longestField.length * fontSize + inlinePadding * 2,
+    height: table.fields.length * fieldHeight + headerHeight,
   };
 }
 // #endregion

@@ -106,7 +106,7 @@ const useStore = create<AppState>((set, get) => ({
   database: null,
   editorModel: null,
   colorMode: "light",
-  nodes: [] as TableNodeType[],
+  nodes: [] as NodeType[],
   edges: [] as Edge[],
   savedPositions: {},
   minimap: false,
