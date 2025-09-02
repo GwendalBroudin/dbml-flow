@@ -13,11 +13,12 @@ import {
   ReactFlowProvider,
   useNodesInitialized,
   useOnSelectionChange,
-  useReactFlow,
+  useReactFlow
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
+import DevTools from "../devTools/dev-tools";
 import HorizontalFloatingEdge, {
   HorizontalFloatingEdgeTypeName,
 } from "../edges/horizontal-floating-edge";
@@ -38,7 +39,7 @@ const selector = (state: AppState) => ({
 
 const nodeTypes = {
   table: TableNode,
-  // group: NodeGroup,
+  // group: BaseNode,
 };
 
 const edgeTypes = {
@@ -93,6 +94,7 @@ function ERViewer({ className, ...props }: FlowProps) {
       minZoom={minZoomLevel}
       connectionMode={ConnectionMode.Loose}
     >
+      <DevTools />
       <Background />
       <Controls>
         <RearrangeButton />
