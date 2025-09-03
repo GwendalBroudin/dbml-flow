@@ -13,7 +13,7 @@ import ViewportLogger from './viewport-logger';
 import { cn } from '@/lib/utils';
  
 export default function DevTools() {
-  const [nodeInspectorActive, setNodeInspectorActive] = useState(true);
+  const [nodeInspectorActive, setNodeInspectorActive] = useState(false);
   const [changeLoggerActive, setChangeLoggerActive] = useState(false);
   const [viewportLoggerActive, setViewportLoggerActive] = useState(true);
  

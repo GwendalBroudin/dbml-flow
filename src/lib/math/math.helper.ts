@@ -1,12 +1,5 @@
 import { Position, Node, InternalNode, Edge } from "@xyflow/react";
 
-// returns the position (top,right,bottom or right) passed node compared to
-function getParams(nodeA: InternalNode, nodeB: InternalNode) {
-  let data = getNodesRelativePosition(nodeA, nodeB);
-
-  const [x, y] = getHandleCoordsByPosition(nodeA, data.sourcePos);
-  return [x, y, data];
-}
 export type NodesRelativePosition = "center" | "right" | "left";
 export type RelativePositionData = {
   nodesRelativePosition: NodesRelativePosition;
@@ -15,11 +8,12 @@ export type RelativePositionData = {
 };
 
 export function getNodesRelativePosition(
-  source: Node | InternalNode,
-  target: Node | InternalNode
+  source: Node,
+  target: Node,
+  nodesByIds: Map<string, Node>
 ): RelativePositionData {
-  const boundsTarget = getNodeBounds(source);
-  const boundsSource = getNodeBounds(target);
+  const boundsTarget = getNodeBounds(source, nodesByIds);
+  const boundsSource = getNodeBounds(target, nodesByIds);
   // Source on the Right of Target
   if (boundsTarget.xMax < boundsSource.xMin) {
     return {
@@ -48,49 +42,8 @@ export function getNodesRelativePosition(
   }
 }
 
-function getHandleCoordsByPosition(
-  node: InternalNode,
-  handlePosition: Position
-) {
-  // all handles are from type source, that's why we use handleBounds.source here
-  const handle = node.internals?.handleBounds?.source?.find(
-    (h) => h.position === handlePosition
-  );
-  if (!handle) {
-    throw new Error(`Handle not found for position: ${handlePosition}`);
-  }
-
-  let offsetX = handle.width / 2;
-  let offsetY = handle.height / 2;
-
-  // this is a tiny detail to make the markerEnd of an edge visible.
-  // The handle position that gets calculated has the origin top-left, so depending which side we are using, we add a little offset
-  // when the handlePosition is Position.Right for example, we need to add an offset as big as the handle itself in order to get the correct position
-  switch (handlePosition) {
-    case Position.Left:
-      offsetX = 0;
-      break;
-    case Position.Right:
-      offsetX = handle.width;
-      break;
-  }
-
-  const x = node.internals.positionAbsolute.x + handle.x + offsetX;
-  const y = node.internals.positionAbsolute.y + handle.y + offsetY;
-
-  return [x, y];
-}
-
-function getNodeCenter(node: InternalNode) {
-  return {
-    x: node.internals.positionAbsolute.x + node.measured.width! / 2,
-    y: node.internals.positionAbsolute.y + node.measured.height! / 2,
-  };
-}
-
-function getNodeBounds(node: Node | InternalNode) {
-  const position =
-    (node as InternalNode).internals?.positionAbsolute ?? node.position;
+function getNodeBounds(node: Node, nodesByIds: Map<string, Node>) {
+  const position = getNodeAbsPosition(node, nodesByIds);
   const size = node.measured ?? { width: node.width, height: node.height };
 
   return {
@@ -102,32 +55,17 @@ function getNodeBounds(node: Node | InternalNode) {
   };
 }
 
-// returns the parameters (sx, sy, tx, ty, sourcePos, targetPos) you need to create an edge
-export function getEdgeParams(source: InternalNode, target: InternalNode) {
-  const [sx, sy, sourcePos] = getParams(source, target);
-  const [tx, ty, targetPos] = getParams(target, source);
+function getNodeAbsPosition(
+  node: Node,
+  nodesByIds: Map<string, Node>
+): { x: number; y: number } {
+  const parent = node.parentId ? nodesByIds.get(node.parentId) : null;
+  if (!parent) return node.position;
 
+  const parentAbsPosition = getNodeAbsPosition(parent, nodesByIds);
   return {
-    sx,
-    sy,
-    tx,
-    ty,
-    sourcePos,
-    targetPos,
-  };
-}
-
-export function getEdgePositions(source: InternalNode, target: InternalNode) {
-  const [sx, sy, sourcePos] = getParams(source, target);
-  const [tx, ty, targetPos] = getParams(target, source);
-
-  return {
-    sx,
-    sy,
-    tx,
-    ty,
-    sourcePos,
-    targetPos,
+    x: parentAbsPosition.x + node.position.x,
+    y: parentAbsPosition.y + node.position.y,
   };
 }
 

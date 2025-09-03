@@ -7,7 +7,7 @@ import type {
   
   // Format the error into a Monaco-compatible structure
   export const formatDiagnosticsForMonaco = (e: CompilerError) => {
-    return e.diags.map((d: CompilerDiagnostic) => {
+    return e.diags?.map((d: CompilerDiagnostic) => {
       const errorLocationStart = d.location.start;
       const errorLocationEnd = d.location.end;
   

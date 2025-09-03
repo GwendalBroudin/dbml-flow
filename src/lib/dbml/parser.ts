@@ -48,7 +48,8 @@ export function parseDatabaseToGraph(database: Database) {
     const parent = groupNodes.find((g) => g.data.nodeIds.includes(n.id));
     if (parent) {
       n.parentId = parent.id;
-      // n.extent = "parent";
+      n.extent = "parent";
+      n.expandParent = true;
     }
   });
 

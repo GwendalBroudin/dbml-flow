@@ -45,6 +45,9 @@ export function computeEdgesRelativeData<
     siblings: {},
   } as EdgesRelativeData;
 
+  const nodesByIds = new Map<string, Node>();
+  nodes.forEach((node) => nodesByIds.set(node.id, node));
+
   edges.forEach((edge) => {
     //target left, source right
     const sourceNode = nodeDic[edge.source];
@@ -53,7 +56,7 @@ export function computeEdgesRelativeData<
     // if we dont find some of the nodes, we return edge as is;
     if (!sourceNode || !targetNode) return edge;
 
-    const positions = getNodesRelativePosition(sourceNode, targetNode);
+    const positions = getNodesRelativePosition(sourceNode, targetNode, nodesByIds);
 
     data.positions[edge.id] = positions;
 
