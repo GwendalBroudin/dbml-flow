@@ -2,7 +2,6 @@ import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-fl
 import {
   ERRelationTypes,
   GroupNodeType,
-  GuessedSize,
   NodePositionIndex,
   TableEdgeType,
   TableNodeType,
@@ -68,7 +67,7 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
   const initialHeight =
     childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
 
-  return <GroupNodeType & GuessedSize>{
+  return <GroupNodeType>{
     id: `${g.schema.name}.${g.name}`,
     type: "group",
     data: {
@@ -77,10 +76,6 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
     },
     initialWidth,
     initialHeight,
-    guessed: {
-      width: initialWidth,
-      height: initialHeight,
-    },
   };
 }
 
@@ -88,7 +83,7 @@ export function mapTableToNode(table: Table) {
   const tableId = getTableId(table);
 
   const guessed = guessSize(table);
-  return <TableNodeType & GuessedSize>{
+  return <TableNodeType>{
     id: tableId,
     type: "table",
     data: {
@@ -98,8 +93,7 @@ export function mapTableToNode(table: Table) {
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,
-    position: { x: 0, y: 0 },
-    guessed,
+    position: { x: 0, y: 0 }
   };
 }
 

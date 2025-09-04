@@ -56,13 +56,23 @@ export function getNodesBounds(nodes: Node[], nodesByIds: Map<string, Node>) {
     yMin,
     yMax,
     width: xMax - xMin,
-    height: yMax - yMin
+    height: yMax - yMin,
+  };
+}
+
+const defaultNodeWidth = 172;
+const defaultNodeHeight = 36;
+
+export function getNodeSize(node: Node) {
+  return {
+    width: node.measured?.width ?? node.initialWidth ?? defaultNodeWidth,
+    height: node.measured?.height ?? node.initialHeight ?? defaultNodeHeight,
   };
 }
 
 function getNodeBounds(node: Node, nodesByIds: Map<string, Node>) {
   const position = getNodeAbsPosition(node, nodesByIds);
-  const size = node.measured ?? { width: node.width ?? node.initialWidth, height: node.height ?? node.initialHeight };
+  const size = getNodeSize(node);
 
   return {
     xMin: position.x,
