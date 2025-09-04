@@ -1,6 +1,5 @@
 import { NodePositionIndex } from "@/types/nodes.types";
-import { Edge, Node } from "@xyflow/react";
-import { resourceUsage } from "process";
+import { Node } from "@xyflow/react";
 
 export function toNodeIndex<TNode extends Node>(nodes: TNode[]) {
   return nodes.reduce((acc, node) => {

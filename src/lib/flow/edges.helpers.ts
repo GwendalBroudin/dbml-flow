@@ -32,26 +32,16 @@ export type EdgesSiblingsIndex = {
 export function computeEdgesRelativeData<
   TNode extends Node,
   TEdge extends Edge
->(nodes: TNode[], edges: TEdge[]) {
-  const nodeDic = nodes.reduce(
-    (dic, n) => ({
-      ...dic,
-      [n.id]: n,
-    }),
-    {} as Record<string, TNode>
-  );
+>(nodesByIds: Map<string, TNode>, edges: TEdge[]) {  
   const data = {
     positions: {},
     siblings: {},
   } as EdgesRelativeData;
 
-  const nodesByIds = new Map<string, Node>();
-  nodes.forEach((node) => nodesByIds.set(node.id, node));
-
   edges.forEach((edge) => {
     //target left, source right
-    const sourceNode = nodeDic[edge.source];
-    const targetNode = nodeDic[edge.target];
+    const sourceNode = nodesByIds.get(edge.source);
+    const targetNode = nodesByIds.get(edge.target);
 
     // if we dont find some of the nodes, we return edge as is;
     if (!sourceNode || !targetNode) return edge;

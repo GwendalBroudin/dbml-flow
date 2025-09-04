@@ -1,4 +1,5 @@
 import { Position, Node, InternalNode, Edge } from "@xyflow/react";
+import { max, min } from "lodash-es";
 
 export type NodesRelativePosition = "center" | "right" | "left";
 export type RelativePositionData = {
@@ -42,16 +43,33 @@ export function getNodesRelativePosition(
   }
 }
 
+export function getNodesBounds(nodes: Node[], nodesByIds: Map<string, Node>) {
+  const bounds = nodes.map((n) => getNodeBounds(n, nodesByIds));
+  let xMin = min(bounds.map((e) => e.xMin))!;
+  let xMax = max(bounds.map((e) => e.xMax))!;
+  let yMin = min(bounds.map((e) => e.yMin))!;
+  let yMax = max(bounds.map((e) => e.yMax))!;
+
+  return {
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    width: xMax - xMin,
+    height: yMax - yMin
+  };
+}
+
 function getNodeBounds(node: Node, nodesByIds: Map<string, Node>) {
   const position = getNodeAbsPosition(node, nodesByIds);
-  const size = node.measured ?? { width: node.width, height: node.height };
+  const size = node.measured ?? { width: node.width ?? node.initialWidth, height: node.height ?? node.initialHeight };
 
   return {
     xMin: position.x,
     xMax: position.x + size.width!,
 
     yMin: position.y,
-    yamx: position.y + size.height!,
+    yMax: position.y + size.height!,
   };
 }
 

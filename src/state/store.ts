@@ -30,14 +30,12 @@ import {
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
-import {
-  NodePositionIndex,
-  NodeType,
-  TableNodeType,
-} from "@/types/nodes.types";
+import { NodePositionIndex, NodeType } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
+import { getNodesBounds } from "@/lib/math/math.helper";
+import { setGroupsSizes } from "@/lib/flow/groups.helpers";
 
 // Helper type for parse results
 type ParseResult =
@@ -51,6 +49,7 @@ export type AppState = {
   editorModel: editor.ITextModel | null;
   colorMode: ColorMode;
   savePositionsInCode: boolean;
+  saveCodeInUrl: boolean;
   firstRender: boolean;
 
   // ReactFlow state
@@ -74,12 +73,12 @@ export type AppState = {
   setfirstRender: (firstRender: boolean) => void;
   setColorMode: (mode: ColorMode) => void;
   setMinimap: (minimap: boolean) => void;
-  onNodesChange: OnNodesChange<TableNodeType>;
+  onNodesChange: OnNodesChange<NodeType>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
-  setNodes: (nodes: TableNodeType[]) => void;
+  setNodes: (nodes: NodeType[]) => void;
   setEdges: (edges: Edge[]) => void;
-  onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
+  onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
 
   setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
@@ -111,6 +110,7 @@ const useStore = create<AppState>((set, get) => ({
   savedPositions: {},
   minimap: false,
   savePositionsInCode: true,
+  saveCodeInUrl: false,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
@@ -125,7 +125,8 @@ const useStore = create<AppState>((set, get) => ({
   setEditorModel: (model) => set({ editorModel: model }),
   setColorMode: (mode) => set({ colorMode: mode }),
   setCode: (code) => {
-    setCodeInUrlDebounced(code);
+    const { saveCodeInUrl } = get();
+    if (saveCodeInUrl) setCodeInUrlDebounced(code);
     set({ code });
   },
 
@@ -161,6 +162,9 @@ const useStore = create<AppState>((set, get) => ({
 
     // Preserve existing node positions
     nodes = applySavedPositions(nodes, savedPositions);
+    const nodesById = new Map<string, NodeType>(nodes.map((n) => [n.id, n]));
+    setGroupsSizes(nodesById);
+
     set({ nodes, edges });
     setSavedPositions(nodes);
   },
@@ -183,13 +187,16 @@ const useStore = create<AppState>((set, get) => ({
   // -------- Flow Actions --------
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
-  setNodes: (nodes: TableNodeType[]) => set({ nodes }),
+  setNodes: (nodes: NodeType[]) => set({ nodes }),
   setEdges: (edges: Edge[]) => set({ edges }),
 
-  onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
+  onNodesChange: (changes: NodeChange<NodeType>[]) => {
     const nodes = applyNodeChanges(changes, get().nodes);
     // const edges = getEdgePositions(get().edges, nodes);
-    const edgesRelativeData = computeEdgesRelativeData(nodes, get().edges);
+    const nodesById = new Map<string, NodeType>(nodes.map((n) => [n.id, n]));
+    const edgesRelativeData = computeEdgesRelativeData(nodesById, get().edges);
+    setGroupsSizes(nodesById, false);
+
     get().setSavedPositions(nodes);
     set({ nodes, edgesRelativeData });
   },
@@ -203,7 +210,7 @@ const useStore = create<AppState>((set, get) => ({
       edges: addEdge(connection, get().edges),
     });
   },
-  onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => {
+  onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => {
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
       animated: selected.nodes.some(
@@ -227,6 +234,8 @@ const useStore = create<AppState>((set, get) => ({
     const { nodes, edges } = get();
     const newNodes = getLayoutedGraph(nodes, edges);
 
+    const nodesById = new Map<string, NodeType>(newNodes.map((n) => [n.id, n]));
+    setGroupsSizes(nodesById);
     set({ nodes: newNodes });
     get().setSavedPositions(newNodes);
     setTimeout(() => fitView(), 0);

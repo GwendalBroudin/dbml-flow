@@ -36,25 +36,22 @@ export function parseDatabaseToGraph(database: Database) {
   const refs = database.schemas.flatMap((s) => s.refs);
   const groups = database.schemas.flatMap((s) => s.tableGroups);
 
-  const nodes = tables.map((t) => mapTableToNode(t));
-  const nodesById = nodes.reduce((acc, n) => {
-    acc[n.id] = n;
-    return acc;
-  }, {} as Record<string, TableNodeType>);
+  const tableNodes = tables.map((t) => mapTableToNode(t));
+  const tableNodesById = new Map(tableNodes.map((n) => [n.id, n]));
 
-  const groupNodes = groups.map((g) => mapToGroupNode(g, nodesById));
+  const groupNodes = groups.map((g) => mapToGroupNode(g, tableNodesById));
 
-  nodes.forEach((n) => {
+  tableNodes.forEach((n) => {
     const parent = groupNodes.find((g) => g.data.nodeIds.includes(n.id));
     if (parent) {
       n.parentId = parent.id;
-      n.extent = "parent";
       n.expandParent = true;
+      n.extent = "parent";
     }
   });
 
   return {
-    nodes: [...groupNodes, ...nodes],
+    nodes: [...groupNodes, ...tableNodes],
     edges: refs.map((r) => mapToEdge(r)),
     groups: groupNodes.map((g) => g.data),
   };
@@ -63,8 +60,8 @@ export function parseDatabaseToGraph(database: Database) {
 export const paddingX = 20;
 export const paddingY = 20;
 
-function mapToGroupNode(g: TableGroup, nodes: Record<string, TableNodeType>) {
-  const childNodes = g.tables.map(getTableId).map((id) => nodes[id]);
+function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
+  const childNodes = g.tables.map(getTableId).map((id) => nodes.get(id)!);
   const initialWidth =
     childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
     (childNodes.length - 1) * paddingX;
@@ -80,10 +77,9 @@ function mapToGroupNode(g: TableGroup, nodes: Record<string, TableNodeType>) {
     },
     initialWidth,
     initialHeight,
-    // position: { x: 100, y: 100 },
     guessed: {
-      width: 172 * g.tables.length + 20 * (g.tables.length - 1),
-      height: 200 + 20 * 2,
+      width: initialWidth,
+      height: initialHeight,
     },
   };
 }
