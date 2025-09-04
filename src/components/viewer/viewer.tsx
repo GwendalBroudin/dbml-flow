@@ -69,7 +69,6 @@ function ERViewer({ className, ...props }: FlowProps) {
 
   // trigger fitview on every code change in the editor
   useEffect(() => {
-    console.log("firstRender", firstRender);
     if (firstRender) {
       setTimeout(() => {
         fitView();

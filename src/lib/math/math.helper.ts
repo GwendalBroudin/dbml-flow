@@ -7,14 +7,21 @@ export type RelativePositionData = {
   sourcePos: Position;
   targetPos: Position;
 };
+export type NodeBounds = {
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  width: number;
+  height: number;
+};
 
 export function getNodesRelativePosition(
   source: Node,
-  target: Node,
-  nodesByIds: Map<string, Node>
+  target: Node
 ): RelativePositionData {
-  const boundsTarget = getNodeBounds(source, nodesByIds);
-  const boundsSource = getNodeBounds(target, nodesByIds);
+  const boundsTarget = getNodeBounds(source);
+  const boundsSource = getNodeBounds(target);
   // Source on the Right of Target
   if (boundsTarget.xMax < boundsSource.xMin) {
     return {
@@ -43,14 +50,14 @@ export function getNodesRelativePosition(
   }
 }
 
-export function getNodesBounds(nodes: Node[], nodesByIds: Map<string, Node>) {
-  const bounds = nodes.map((n) => getNodeBounds(n, nodesByIds));
+export function getNodesBounds(nodes: Node[]) {
+  const bounds = nodes.map((n) => getNodeBounds(n));
   let xMin = min(bounds.map((e) => e.xMin))!;
   let xMax = max(bounds.map((e) => e.xMax))!;
   let yMin = min(bounds.map((e) => e.yMin))!;
   let yMax = max(bounds.map((e) => e.yMax))!;
 
-  return {
+  return <NodeBounds>{
     xMin,
     xMax,
     yMin,
@@ -70,30 +77,15 @@ export function getNodeSize(node: Node) {
   };
 }
 
-function getNodeBounds(node: Node, nodesByIds: Map<string, Node>) {
-  const position = getNodeAbsPosition(node, nodesByIds);
+function getNodeBounds(node: Node) {
   const size = getNodeSize(node);
 
   return {
-    xMin: position.x,
-    xMax: position.x + size.width!,
+    xMin: node.position.x,
+    xMax: node.position.x + size.width!,
 
-    yMin: position.y,
-    yMax: position.y + size.height!,
-  };
-}
-
-function getNodeAbsPosition(
-  node: Node,
-  nodesByIds: Map<string, Node>
-): { x: number; y: number } {
-  const parent = node.parentId ? nodesByIds.get(node.parentId) : null;
-  if (!parent) return node.position;
-
-  const parentAbsPosition = getNodeAbsPosition(parent, nodesByIds);
-  return {
-    x: parentAbsPosition.x + node.position.x,
-    y: parentAbsPosition.y + node.position.y,
+    yMin: node.position.y,
+    yMax: node.position.y + size.height!,
   };
 }
 
@@ -154,3 +146,4 @@ export function getHandleCoords(
 
   return [x, y];
 }
+

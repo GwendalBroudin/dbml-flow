@@ -46,7 +46,7 @@ export function computeEdgesRelativeData<
     // if we dont find some of the nodes, we return edge as is;
     if (!sourceNode || !targetNode) return edge;
 
-    const positions = getNodesRelativePosition(sourceNode, targetNode, nodesByIds);
+    const positions = getNodesRelativePosition(sourceNode, targetNode);
 
     data.positions[edge.id] = positions;
 

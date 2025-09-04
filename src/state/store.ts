@@ -9,6 +9,7 @@ import {
   FitView,
   Node,
   NodeChange,
+  NodeDimensionChange,
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
@@ -30,12 +31,17 @@ import {
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
-import { NodePositionIndex, NodeType } from "@/types/nodes.types";
+import {
+  GroupNodeType,
+  NodePositionIndex,
+  NodeType,
+  TableNodeType,
+} from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
 import { getNodesBounds } from "@/lib/math/math.helper";
-import { setGroupsSizes } from "@/lib/flow/groups.helpers";
+import { computeRelatedGroupChanges, getBoundedGroups } from "@/lib/flow/groups.helpers";
 
 // Helper type for parse results
 type ParseResult =
@@ -55,6 +61,8 @@ export type AppState = {
   // ReactFlow state
   nodes: NodeType[];
   edges: Edge[];
+  groupNodes: GroupNodeType[];
+  tableNodes: TableNodeType[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
   edgesRelativeData: EdgesRelativeData;
@@ -76,8 +84,6 @@ export type AppState = {
   onNodesChange: OnNodesChange<NodeType>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
-  setNodes: (nodes: NodeType[]) => void;
-  setEdges: (edges: Edge[]) => void;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
 
   setSavedPositions: (nodes: Node[]) => void;
@@ -106,6 +112,8 @@ const useStore = create<AppState>((set, get) => ({
   editorModel: null,
   colorMode: "light",
   nodes: [] as NodeType[],
+  groupNodes: [] as GroupNodeType[],
+  tableNodes: [] as TableNodeType[],
   edges: [] as Edge[],
   savedPositions: {},
   minimap: false,
@@ -152,21 +160,28 @@ const useStore = create<AppState>((set, get) => ({
     const { savedPositions: initialSavedPositions, setSavedPositions } = get();
 
     // Get initial layout
-    let { nodes, edges } = parseDatabaseToGraph(database);
+    let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
 
     const savedPositions = initialSavedPositions;
 
-    if (nodes.length !== Object.keys(savedPositions).length) {
-      nodes = getLayoutedGraph(nodes, edges);
+    if (tableNodes.length !== Object.keys(savedPositions).length) {
+      tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
     }
 
-    // Preserve existing node positions
-    nodes = applySavedPositions(nodes, savedPositions);
-    const nodesById = new Map<string, NodeType>(nodes.map((n) => [n.id, n]));
-    setGroupsSizes(nodesById);
+    const nodesById = new Map<string, NodeType>(
+      tableNodes.map((n) => [n.id, n])
+    );
+    groupNodes = getBoundedGroups(groupNodes, nodesById);
 
-    set({ nodes, edges });
-    setSavedPositions(nodes);
+    // Preserve existing node positions
+    tableNodes = applySavedPositions(tableNodes, savedPositions);
+    set({
+      tableNodes,
+      groupNodes,
+      nodes: [...groupNodes, ...tableNodes],
+      edges,
+    });
+    setSavedPositions(tableNodes);
   },
 
   // Editor markers management
@@ -187,29 +202,55 @@ const useStore = create<AppState>((set, get) => ({
   // -------- Flow Actions --------
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
-  setNodes: (nodes: NodeType[]) => set({ nodes }),
-  setEdges: (edges: Edge[]) => set({ edges }),
 
   onNodesChange: (changes: NodeChange<NodeType>[]) => {
-    const nodes = applyNodeChanges(changes, get().nodes);
-    // const edges = getEdgePositions(get().edges, nodes);
-    const nodesById = new Map<string, NodeType>(nodes.map((n) => [n.id, n]));
-    const edgesRelativeData = computeEdgesRelativeData(nodesById, get().edges);
-    setGroupsSizes(nodesById, false);
+    const { nodes } = get();
+    const oldNodesById = new Map<string, NodeType>(nodes.map((n) => [n.id, n]));
 
-    get().setSavedPositions(nodes);
-    set({ nodes, edgesRelativeData });
+    const computedChanges = computeRelatedGroupChanges(changes, oldNodesById);
+
+    let newNodes = applyNodeChanges([...changes, ...computedChanges], nodes);
+
+    if (computedChanges.some((c) => c.type === "dimensions")) {
+      newNodes = newNodes.map((n) => {
+        const change = computedChanges.find(
+          (c) => c.type === "dimensions" && c.id === n.id
+        ) as NodeDimensionChange;
+        if (!change) return n;
+        return {
+          ...n,
+          width: change.dimensions!.width,
+          height: change.dimensions!.height,
+        };
+      });
+    }
+
+    const newNodesById = new Map<string, NodeType>(
+      newNodes.map((n) => [n.id, n])
+    );
+
+    const edgesRelativeData = computeEdgesRelativeData(
+      newNodesById,
+      get().edges
+    );
+    // getBoundedGroups(nodesById, false);
+
+    get().setSavedPositions(newNodes);
+    set({ nodes: newNodes, edgesRelativeData });
   },
+
   onEdgesChange: (changes: EdgeChange[]) => {
     set({
       edges: applyEdgeChanges(changes, get().edges),
     });
   },
+
   onConnect: (connection: Connection) => {
     set({
       edges: addEdge(connection, get().edges),
     });
   },
+
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => {
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
@@ -231,13 +272,21 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
   onLayout: (direction, fitView) => {
-    const { nodes, edges } = get();
-    const newNodes = getLayoutedGraph(nodes, edges);
+    const { tableNodes, groupNodes, edges } = get();
+    const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
 
-    const nodesById = new Map<string, NodeType>(newNodes.map((n) => [n.id, n]));
-    setGroupsSizes(nodesById);
-    set({ nodes: newNodes });
-    get().setSavedPositions(newNodes);
+    const tableNodesById = new Map<string, NodeType>(
+      tableNodes.map((n) => [n.id, n])
+    );
+
+    const newGroupNodes = getBoundedGroups(groupNodes, tableNodesById);
+
+    set({
+      tableNodes: newTableNodes,
+      groupNodes: newGroupNodes,
+      nodes: [...newGroupNodes, ...newTableNodes],
+    });
+    get().setSavedPositions(tableNodes);
     setTimeout(() => fitView(), 0);
   },
 }));
@@ -245,3 +294,4 @@ const useStore = create<AppState>((set, get) => ({
 useStore.getState().initState();
 
 export default useStore;
+

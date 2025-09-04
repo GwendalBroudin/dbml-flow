@@ -6,6 +6,7 @@ export type TableNodeData = {
   label: string;
   table: Table;
   index?: number;
+  parentId?: string; // group id  
 };
 
 export type TableNodeType = Node<TableNodeData, "table">;
@@ -26,12 +27,12 @@ export type NodePositionIndex = {
   [nodeId: string]: [x: number, y: number];
 };
 
-export type NodeGroupData = {
+export type GroupNodeData = {
   id: string;
   label: string;
   nodeIds: string[];
 };
 
-export type GroupNodeType = Node<NodeGroupData, "group">;
+export type GroupNodeType = Node<GroupNodeData, "group">;
 
 export type NodeType = TableNodeType | GroupNodeType;

@@ -31,28 +31,18 @@ export function getNodeAndEdgesFromDbml(dbml: string) {
 }
 export function parseDatabaseToGraph(database: Database) {
   const tables = database.schemas.flatMap((s) => s.tables);
-
   const refs = database.schemas.flatMap((s) => s.refs);
   const groups = database.schemas.flatMap((s) => s.tableGroups);
 
   const tableNodes = tables.map((t) => mapTableToNode(t));
-  const tableNodesById = new Map(tableNodes.map((n) => [n.id, n]));
 
+  const tableNodesById = new Map(tableNodes.map((n) => [n.id, n]));
   const groupNodes = groups.map((g) => mapToGroupNode(g, tableNodesById));
 
-  tableNodes.forEach((n) => {
-    const parent = groupNodes.find((g) => g.data.nodeIds.includes(n.id));
-    if (parent) {
-      n.parentId = parent.id;
-      n.expandParent = true;
-      n.extent = "parent";
-    }
-  });
-
   return {
-    nodes: [...groupNodes, ...tableNodes],
+    tableNodes,
     edges: refs.map((r) => mapToEdge(r)),
-    groups: groupNodes.map((g) => g.data),
+    groupNodes,
   };
 }
 
@@ -60,7 +50,9 @@ export const paddingX = 20;
 export const paddingY = 20;
 
 function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
-  const childNodes = g.tables.map(getTableId).map((id) => nodes.get(id)!);
+  const childNodes = g.tables
+    .map(getTableOrGroupId)
+    .map((id) => nodes.get(id)!);
   const initialWidth =
     childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
     (childNodes.length - 1) * paddingX;
@@ -68,11 +60,12 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
     childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
 
   return <GroupNodeType>{
-    id: `${g.schema.name}.${g.name}`,
+    id: getTableOrGroupId(g),
     type: "group",
+    zIndex: 5,
     data: {
       label: g.name,
-      nodeIds: g.tables.map(getTableId),
+      nodeIds: g.tables.map(getTableOrGroupId),
     },
     initialWidth,
     initialHeight,
@@ -80,20 +73,21 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
 }
 
 export function mapTableToNode(table: Table) {
-  const tableId = getTableId(table);
+  const tableId = getTableOrGroupId(table);
 
   const guessed = guessSize(table);
   return <TableNodeType>{
     id: tableId,
     type: "table",
+    zIndex: 10,
     data: {
       table,
       label: table.name,
-      guessed,
+      parentId: table.group ? getTableOrGroupId(table.group) : undefined,
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,
-    position: { x: 0, y: 0 }
+    position: { x: 0, y: 0 },
   };
 }
 
@@ -110,8 +104,8 @@ export function mapToEdge(ref: Ref) {
   const targetRelationType = getRelationType(targetEndPoint, sourceField);
   return <TableEdgeType>{
     id: ref.id.toString(),
-    source: getTableId(sourceEndPoint.fields[0].table),
-    target: getTableId(targetEndPoint.fields[0].table),
+    source: getTableOrGroupId(sourceEndPoint.fields[0].table),
+    target: getTableOrGroupId(targetEndPoint.fields[0].table),
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
@@ -143,11 +137,11 @@ export function getRelationType(
 
   throw new Error("Unknown relation type");
 }
-export function getTableId(table: Table) {
+export function getTableOrGroupId(table: Table | TableGroup) {
   return `${table.schema.name}.${table.name}`;
 }
 export function getFieldId(e: Field) {
-  return `${getTableId(e.table)}.${e.name}`;
+  return `${getTableOrGroupId(e.table)}.${e.name}`;
 }
 
 export function isNotNull(field: Field): boolean {
@@ -195,7 +189,6 @@ export function extractPositions(code: string) {
   return JSON.parse(positionMatch[1]) as NodePositionIndex;
 }
 
-let isRunning = false;
 export function setPositionsInCode(
   code: string,
   savedPositions: NodePositionIndex
