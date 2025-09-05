@@ -29,23 +29,26 @@ export const BaseNodeHeader = forwardRef<
     headerColor?: string;
     label: string;
   }
->(({ className, selected, headerColor, label, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn("rounded-tl-sm rounded-tr-sm bg-secondary", className)}
-    style={{
-      backgroundColor: headerColor,
-      opacity: selected ? 1 : 0.8,
-      height: HEADER_HEIGHT,
-    }}
-    {...props}
-  >
-    <div className="p-1 pl-2">
-      <h2 className="font-semibold text-[15px] mix-blend-luminosity filter-invert">
-        {label}
-      </h2>
+>(({ className, selected, headerColor, label, ...props }, ref) => {
+  headerColor = headerColor || "var(--color-primary)";
+  return (
+    <div
+      ref={ref}
+      className={cn("rounded-tl-sm rounded-tr-sm bg-secondary", className)}
+      style={{
+        backgroundColor: headerColor,
+        opacity: selected ? 1 : 0.8,
+        height: HEADER_HEIGHT,
+      }}
+      {...props}
+    >
+      <div className="p-1 pl-2">
+        <h2 className="font-semibold text-[15px] mix-blend-luminosity filter-invert">
+          {label}
+        </h2>
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 BaseNodeHeader.displayName = "BaseNodeHeader";
