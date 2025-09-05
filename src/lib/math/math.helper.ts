@@ -1,22 +1,24 @@
 import { Position, Node, InternalNode, Edge } from "@xyflow/react";
+import { max, min } from "lodash-es";
 
-// returns the position (top,right,bottom or right) passed node compared to
-function getParams(nodeA: InternalNode, nodeB: InternalNode) {
-  let data = getNodesRelativePosition(nodeA, nodeB);
-
-  const [x, y] = getHandleCoordsByPosition(nodeA, data.sourcePos);
-  return [x, y, data];
-}
 export type NodesRelativePosition = "center" | "right" | "left";
 export type RelativePositionData = {
   nodesRelativePosition: NodesRelativePosition;
   sourcePos: Position;
   targetPos: Position;
 };
+export type NodeBounds = {
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  width: number;
+  height: number;
+};
 
 export function getNodesRelativePosition(
-  source: Node | InternalNode,
-  target: Node | InternalNode
+  source: Node,
+  target: Node
 ): RelativePositionData {
   const boundsTarget = getNodeBounds(source);
   const boundsSource = getNodeBounds(target);
@@ -48,86 +50,42 @@ export function getNodesRelativePosition(
   }
 }
 
-function getHandleCoordsByPosition(
-  node: InternalNode,
-  handlePosition: Position
-) {
-  // all handles are from type source, that's why we use handleBounds.source here
-  const handle = node.internals?.handleBounds?.source?.find(
-    (h) => h.position === handlePosition
-  );
-  if (!handle) {
-    throw new Error(`Handle not found for position: ${handlePosition}`);
-  }
+export function getNodesBounds(nodes: Node[]) {
+  const bounds = nodes.map((n) => getNodeBounds(n));
+  let xMin = min(bounds.map((e) => e.xMin))!;
+  let xMax = max(bounds.map((e) => e.xMax))!;
+  let yMin = min(bounds.map((e) => e.yMin))!;
+  let yMax = max(bounds.map((e) => e.yMax))!;
 
-  let offsetX = handle.width / 2;
-  let offsetY = handle.height / 2;
-
-  // this is a tiny detail to make the markerEnd of an edge visible.
-  // The handle position that gets calculated has the origin top-left, so depending which side we are using, we add a little offset
-  // when the handlePosition is Position.Right for example, we need to add an offset as big as the handle itself in order to get the correct position
-  switch (handlePosition) {
-    case Position.Left:
-      offsetX = 0;
-      break;
-    case Position.Right:
-      offsetX = handle.width;
-      break;
-  }
-
-  const x = node.internals.positionAbsolute.x + handle.x + offsetX;
-  const y = node.internals.positionAbsolute.y + handle.y + offsetY;
-
-  return [x, y];
-}
-
-function getNodeCenter(node: InternalNode) {
-  return {
-    x: node.internals.positionAbsolute.x + node.measured.width! / 2,
-    y: node.internals.positionAbsolute.y + node.measured.height! / 2,
+  return <NodeBounds>{
+    xMin,
+    xMax,
+    yMin,
+    yMax,
+    width: xMax - xMin,
+    height: yMax - yMin,
   };
 }
 
-function getNodeBounds(node: Node | InternalNode) {
-  const position =
-    (node as InternalNode).internals?.positionAbsolute ?? node.position;
-  const size = node.measured ?? { width: node.width, height: node.height };
+const defaultNodeWidth = 172;
+const defaultNodeHeight = 36;
 
+export function getNodeSize(node: Node) {
   return {
-    xMin: position.x,
-    xMax: position.x + size.width!,
-
-    yMin: position.y,
-    yamx: position.y + size.height!,
+    width: node.measured?.width ?? node.initialWidth ?? defaultNodeWidth,
+    height: node.measured?.height ?? node.initialHeight ?? defaultNodeHeight,
   };
 }
 
-// returns the parameters (sx, sy, tx, ty, sourcePos, targetPos) you need to create an edge
-export function getEdgeParams(source: InternalNode, target: InternalNode) {
-  const [sx, sy, sourcePos] = getParams(source, target);
-  const [tx, ty, targetPos] = getParams(target, source);
+function getNodeBounds(node: Node) {
+  const size = getNodeSize(node);
 
   return {
-    sx,
-    sy,
-    tx,
-    ty,
-    sourcePos,
-    targetPos,
-  };
-}
+    xMin: node.position.x,
+    xMax: node.position.x + size.width!,
 
-export function getEdgePositions(source: InternalNode, target: InternalNode) {
-  const [sx, sy, sourcePos] = getParams(source, target);
-  const [tx, ty, targetPos] = getParams(target, source);
-
-  return {
-    sx,
-    sy,
-    tx,
-    ty,
-    sourcePos,
-    targetPos,
+    yMin: node.position.y,
+    yMax: node.position.y + size.height!,
   };
 }
 
@@ -188,3 +146,4 @@ export function getHandleCoords(
 
   return [x, y];
 }
+

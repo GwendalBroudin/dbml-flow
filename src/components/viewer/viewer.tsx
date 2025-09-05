@@ -13,16 +13,19 @@ import {
   ReactFlowProvider,
   useNodesInitialized,
   useOnSelectionChange,
-  useReactFlow,
+  useReactFlow
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
-import { getNodeColor } from "./viewer.helper";
+import DevTools from "../devTools/dev-tools";
 import HorizontalFloatingEdge, {
   HorizontalFloatingEdgeTypeName,
 } from "../edges/horizontal-floating-edge";
 import ERMarkers from "../edges/markers";
+import { getNodeClass, getNodeColor } from "./viewer.helper";
+import { TableGroupNode } from "../table-group-node";
+import { NodeTypes } from "@/types/nodes.types";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -37,7 +40,8 @@ const selector = (state: AppState) => ({
 });
 
 const nodeTypes = {
-  table: TableNode,
+  [NodeTypes.Table]: TableNode,
+  [NodeTypes.TableGroup]: TableGroupNode,
 };
 
 const edgeTypes = {
@@ -67,7 +71,6 @@ function ERViewer({ className, ...props }: FlowProps) {
 
   // trigger fitview on every code change in the editor
   useEffect(() => {
-    console.log("firstRender", firstRender);
     if (firstRender) {
       setTimeout(() => {
         fitView();
@@ -76,7 +79,7 @@ function ERViewer({ className, ...props }: FlowProps) {
     }
   }, [initialized, firstRender, setfirstRender]);
 
-  const map = minimap ? <MiniMap nodeColor={getNodeColor} /> : null;
+  const map = minimap ? <MiniMap nodeColor={getNodeColor} nodeClassName={getNodeClass} /> : null;
 
   return (
     <ReactFlow
@@ -92,6 +95,7 @@ function ERViewer({ className, ...props }: FlowProps) {
       minZoom={minZoomLevel}
       connectionMode={ConnectionMode.Loose}
     >
+      <DevTools />
       <Background />
       <Controls>
         <RearrangeButton />

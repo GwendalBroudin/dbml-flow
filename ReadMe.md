@@ -6,7 +6,8 @@
 - [ ] Edge hover
 - [x] Edge heads distribution
 - [x] Edge heads (one-optionnal, one, many) + label
-- [ ] Groups 
+- [x] Groups 
+- [ ] Groups folding 
 - [ ] Show relation fields only
 - [ ] Show table header only
 - [ ] Enums 
@@ -28,6 +29,9 @@
 - [x] Viewer mode
 - [ ] Download dbml file from url (add warning when try to modify code)
 
+## Bugs
+- [ ] Function getTextWidth() returns wrong value on startup (8 instead of 7)
+- [ ] Scroll missing on editor
 
 # Sources 
 

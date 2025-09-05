@@ -1,8 +1,16 @@
+import {
+  FIELD_BORDER,
+  FIELD_HEIGHT_TOTAL,
+  FIELD_SPACING,
+  HEADER_HEIGHT,
+  PRIMARY_KEY_WIDTH,
+} from "@/components/table-constants";
 import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
 import {
   ERRelationTypes,
-  GuessedSize,
+  GroupNodeType,
   NodePositionIndex,
+  NodeTypes,
   TableEdgeType,
   TableNodeType,
 } from "@/types/nodes.types";
@@ -12,6 +20,8 @@ import Endpoint from "@dbml/core/types/model_structure/endpoint";
 import Field from "@dbml/core/types/model_structure/field";
 import Ref from "@dbml/core/types/model_structure/ref";
 import Table from "@dbml/core/types/model_structure/table";
+import TableGroup from "@dbml/core/types/model_structure/tableGroup";
+import { get } from "http";
 
 //#region DBML to Nodes and Edges
 export type RefDic = { [k: string]: Ref[] };
@@ -23,36 +33,75 @@ export function getNodeAndEdgesFromDbml(dbml: string) {
     const database = parser.parse(dbml, "dbmlv2");
     console.log("database", database);
 
-    return parseDatabaseToNodesAndEdges(database);
+    return parseDatabaseToGraph(database);
   } catch (e) {
     return { error: e };
   }
 }
-export function parseDatabaseToNodesAndEdges(database: Database) {
+export function parseDatabaseToGraph(database: Database) {
   const tables = database.schemas.flatMap((s) => s.tables);
-
   const refs = database.schemas.flatMap((s) => s.refs);
+  const groups = database.schemas.flatMap((s) => s.tableGroups);
+
+  const tableNodes = tables.map((t) => mapTableToNode(t));
+
+  const tableNodesById = new Map(tableNodes.map((n) => [n.id, n]));
+  const groupNodes = groups.map((g) => mapToGroupNode(g, tableNodesById));
 
   return {
-    nodes: tables.map((t, i) => mapToNode(t)),
+    tableNodes,
     edges: refs.map((r) => mapToEdge(r)),
+    groupNodes,
   };
 }
 
-export function mapToNode(table: Table) {
+export const paddingX = 20;
+export const paddingY = 20;
+
+function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
+  const childNodes = g.tables
+    .map(getTableId)
+    .map((id) => nodes.get(id)!);
+  const initialWidth =
+    childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
+    (childNodes.length - 1) * paddingX;
+  const initialHeight =
+    childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
+
+  return <GroupNodeType>{
+    id: getGroupId(g),
+    type: NodeTypes.TableGroup,
+    zIndex: -1001,
+    data: {
+      label: g.name,
+      nodeIds: g.tables.map(getTableId),
+      color: g.color,
+    },
+    initialWidth,
+    initialHeight,
+  };
+}
+
+export function mapTableToNode(table: Table) {
   const tableId = getTableId(table);
 
-  return <TableNodeType & GuessedSize>{
+  const guessed = guessSize(table);
+  return <TableNodeType>{
     id: tableId,
-    type: "table",
+    type: NodeTypes.Table,
+    zIndex: 10,
     data: {
       table,
       label: table.name,
+      parentId: table.group ? getGroupId(table.group) : undefined,
+      color: table.headerColor,
     },
+    initialWidth: guessed.width,
+    initialHeight: guessed.height,
     position: { x: 0, y: 0 },
-    guessed: guessSize(table),
   };
 }
+
 export function mapToEdge(ref: Ref) {
   const sourceEndPoint = ref.endpoints[0];
   const targetEndPoint = ref.endpoints[1];
@@ -71,7 +120,7 @@ export function mapToEdge(ref: Ref) {
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
-    markerStart: sourceRelationType ,
+    markerStart: sourceRelationType,
     markerEnd: targetRelationType,
     data: {
       sourcefieldId,
@@ -87,10 +136,10 @@ export function mapToEdge(ref: Ref) {
 //#region helpers
 export function getRelationType(
   endPoint: Endpoint,
-  targetfield : Field
+  targetfield: Field
 ): ERRelationTypes {
-  if(endPoint.relation === "1" && isNotNull(targetfield)) {
-    return "one" ;
+  if (endPoint.relation === "1" && isNotNull(targetfield)) {
+    return "one";
   } else if (endPoint.relation === "1") {
     return "oneOptionnal";
   } else if (endPoint.relation === "*") {
@@ -99,23 +148,30 @@ export function getRelationType(
 
   throw new Error("Unknown relation type");
 }
+
 export function getTableId(table: Table) {
-  return `${table.schema.name}.${table.name}`;
-}
-export function getFieldId(e: Field) {
-  return `${getTableId(e.table)}.${e.name}`;
+  return `t-${getBaseId(table)}`;
 }
 
-export function isNotNull(
-  field: Field
-): boolean {
+export function getGroupId(group: TableGroup) {
+  return `g-${getBaseId(group)}`;
+}
+
+export function getFieldId(e: Field) {
+  return `f-${getBaseId(e.table)}.${e.name}`;
+}
+
+function getBaseId(table: Table | TableGroup) {
+  return `${table.schema.name}.${table.name}`;
+}
+
+export function isNotNull(field: Field): boolean {
   const table = field.table;
   return (
     field.not_null ||
     field.pk ||
-    table.indexes?.find((i) =>
-      i.columns.some((c) => c.value === field.name)
-    )?.pk as unknown as boolean
+    (table.indexes?.find((i) => i.columns.some((c) => c.value === field.name))
+      ?.pk as unknown as boolean)
   );
 }
 // #endregion
@@ -123,10 +179,10 @@ export function isNotNull(
 // #region size guesser
 
 // Guess size function for nodes
-const headerHeight = 39;
-const fieldHeight = 28;
 
-const fontSize = 14;
+let fontWidth = 7; //  getTextWidth() return wrong value on start up, to be investigated
+
+const inlinePadding = 8;
 
 export function guessSize(table: Table) {
   const longestField = table.fields
@@ -135,8 +191,13 @@ export function guessSize(table: Table) {
       return e.length > longest.length ? e : longest;
     }, "");
   return {
-    width: longestField.length * fontSize,
-    height: table.fields.length * fieldHeight + headerHeight + 20,
+    width:
+      longestField.length * fontWidth +
+      inlinePadding * 2 +
+      PRIMARY_KEY_WIDTH +
+      FIELD_SPACING +
+      FIELD_BORDER * 2,
+    height: table.fields.length * FIELD_HEIGHT_TOTAL + HEADER_HEIGHT,
   };
 }
 // #endregion
@@ -152,7 +213,6 @@ export function extractPositions(code: string) {
   return JSON.parse(positionMatch[1]) as NodePositionIndex;
 }
 
-let isRunning = false;
 export function setPositionsInCode(
   code: string,
   savedPositions: NodePositionIndex

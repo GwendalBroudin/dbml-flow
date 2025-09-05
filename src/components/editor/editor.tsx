@@ -1,34 +1,26 @@
+import { Editor, OnMount } from "@monaco-editor/react";
 import * as _ from "lodash-es";
 import React, { useCallback, useEffect } from "react";
-import { Editor, OnMount } from "@monaco-editor/react";
-import { EDITOR_CONFIG, EDITOR_OPTIONS, StartupCode } from "./editor.constant";
+import { EDITOR_CONFIG, EDITOR_OPTIONS } from "./editor.constant";
 
-import { CompilerError } from "@dbml/core/types/parse/error";
 import useStore from "@/state/store";
-import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 
 const DBMLEditor: React.FC = () => {
-  const { code, setCode, setEditorModel, parseDBML, setMarkers } = useStore();
-
-  // Error handling utility
-  const handleParserError = useCallback(
-    (error: unknown) => {
-      if (error as CompilerError) {
-        const markers = formatDiagnosticsForMonaco(error as CompilerError);
-        setMarkers(markers);
-      } else if (error instanceof Error) {
-        console.error("DBML Parser Error:", error.message);
-      } else {
-        console.error("Unknown error:", error);
-      }
-    },
-    [setMarkers]
-  );
+  const {
+    code,
+    globalError,
+    setCode,
+    setEditorModel,
+    parseDBML,
+    setEditorTextFocus,
+  } = useStore();
 
   // Editor mount handler
   const handleEditorMount: OnMount = useCallback(
     (editor) => {
       setEditorModel(editor.getModel());
+      editor.onDidFocusEditorText(() => setEditorTextFocus(true));
+      editor.onDidBlurEditorText(() => setEditorTextFocus(false));
     },
     [setEditorModel]
   );
@@ -38,12 +30,9 @@ const DBMLEditor: React.FC = () => {
     _.debounce((newValue: string | undefined) => {
       const updatedCode = newValue || "";
       setCode(updatedCode);
-      const result = parseDBML(updatedCode);
-      if (!result.success) {
-        handleParserError(result.error);
-      }
+      parseDBML(updatedCode);
     }, EDITOR_CONFIG.BUILD_DELAY),
-    [parseDBML, setCode, handleParserError]
+    [parseDBML, setCode]
   );
 
   // Cleanup debounced function on unmount
@@ -54,16 +43,29 @@ const DBMLEditor: React.FC = () => {
   }, [handleCodeChange]);
 
   return (
-    <Editor
-      onMount={handleEditorMount}
-      onChange={handleCodeChange}
-      className="flex-1"
-      defaultLanguage={EDITOR_CONFIG.LANGUAGE}
-      value={code}
-      theme={EDITOR_CONFIG.THEME}
-      options={EDITOR_OPTIONS}
-    />
+    <div className="flex flex-col h-full">
+      <GlobalErrorMessage error={globalError} />
+      <Editor
+        onMount={handleEditorMount}
+        onChange={handleCodeChange}
+        defaultLanguage={EDITOR_CONFIG.LANGUAGE}
+        value={code}
+        theme={EDITOR_CONFIG.THEME}
+        className="flex-1"
+        options={EDITOR_OPTIONS}
+      />
+    </div>
   );
+};
+
+const GlobalErrorMessage: React.FC<{ error: any }> = ({ error }) => {
+  const message = error?.message ?? error?.toString();
+  console.log("Rendering GlobalErrorMessage", error);
+  return message ? (
+    <div className="p-2 bg-red-400 text-white flex-auto shrink-0 max-h-16 overflow-y-auto break-words">
+      <p>{message}</p>
+    </div>
+  ) : null;
 };
 
 export default DBMLEditor;

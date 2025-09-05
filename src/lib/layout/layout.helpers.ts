@@ -1,6 +1,5 @@
 import { NodePositionIndex } from "@/types/nodes.types";
-import { Edge, Node } from "@xyflow/react";
-import { resourceUsage } from "process";
+import { Node } from "@xyflow/react";
 
 export function toNodeIndex<TNode extends Node>(nodes: TNode[]) {
   return nodes.reduce((acc, node) => {
@@ -26,21 +25,3 @@ export function applySavedPositions<TNode extends Node>(
   );
 }
 
-export function getEdgePositions(edges: Edge[], nodes: Node[]) {
-  return edges;
-  //   const nodeMap = nodes.reduce((acc, node) => {
-  //     acc[node.id] = node;
-  //     return acc;
-  //   }, {} as Record<string, Node>);
-
-  //   const edgeMap =
-
-  // return edges.map((edge) => {
-  //   const sourceNode = nodeMap[edge.source];
-  //   const targetNode = nodeMap[edge.target];
-
-  //   return {
-  //     sourcePosition: edge.sourceHandle ? "right" : "left",
-  //     targetPosition: edge.targetHandle ? "right" : "left",
-  //   };
-}

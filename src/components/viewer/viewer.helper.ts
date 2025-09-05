@@ -1,8 +1,10 @@
-import Table from "@dbml/core/types/model_structure/table";
+import { NodeTypes } from "@/types/nodes.types";
 import { Node } from "@xyflow/react";
 
 export function getNodeColor(node: Node) {
-    if (node.type !== "table") return "#FF5733";
-    const table = node.data.table as Table;
-    return table.headerColor;
+  return (node.data.headerColor as string) ?? "#636363ff";
+}
+
+export function getNodeClass(node: Node) {
+  return node.type === NodeTypes.TableGroup ? "opacity-50" : "";
 }

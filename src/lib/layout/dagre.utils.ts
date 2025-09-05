@@ -1,24 +1,47 @@
-import { NodeWithGuessedSize, TableNodeType } from "@/types/nodes.types";
+import { GroupNodeType, NodeType, TableNodeType } from "@/types/nodes.types";
 import dagre from "@dagrejs/dagre";
-import { Edge, Node } from "@xyflow/react";
+import { Edge } from "@xyflow/react";
+import { getNodeSize, getNodesBounds } from "../math/math.helper";
+
+const rankdir = "LR";
 
 const dagreGraph = new dagre.graphlib.Graph({
   multigraph: true,
-  compound: true
-}).setDefaultEdgeLabel(() => ({}));
+  compound: true,
+})
+  .setDefaultEdgeLabel(() => ({}))
+  .setGraph({ rankdir, compound: true, ranksep: 30 });
 
-const defaultNodeWidth = 172;
-const defaultNodeHeight = 36;
-const rankdir = "LR";
+function clearDagreGraph() {
+  dagreGraph.nodes().forEach((node) => {
+    dagreGraph.removeNode(node);
+  });
+  dagreGraph.edges().forEach((edge) => {
+    dagreGraph.removeEdge(edge.v, edge.w, edge.name);
+  });
+}
 
-export const getLayoutedGraph = (nodes: NodeWithGuessedSize[], edges: Edge[]) => {
-  dagreGraph.setGraph({ rankdir, compound: true, ranksep: 100 });
+export function getLayoutedGraph(
+  tableNodes: TableNodeType[],
+  groupNodes: GroupNodeType[],
+  edges: Edge[]
+) {
+  dagreGraph.setGraph({ rankdir, compound: true, ranksep: 30 });
+  clearDagreGraph();
 
-  nodes.forEach((node) => {
+  // Set nodes with their width and height
+  tableNodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
+      ...getNodeSize(node),
+    });
+  });
 
-      width: node.measured?.width ?? node.guessed?.width ?? defaultNodeWidth,
-      height: node.measured?.height ?? node.guessed?.height ?? defaultNodeHeight,
+  groupNodes.forEach((group) => {
+    if (group.data.nodeIds.length === 0) return;
+
+    dagreGraph.setNode(group.id, {});
+    group.data.nodeIds.forEach((id) => {
+      dagreGraph.setParent(id, group.id);
     });
   });
 
@@ -30,15 +53,16 @@ export const getLayoutedGraph = (nodes: NodeWithGuessedSize[], edges: Edge[]) =>
 
   dagre.layout(dagreGraph);
 
-  const newNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
+  const newNodes = tableNodes.map((node) => {
+    const dagreNode = dagreGraph.node(node.id);
+
     const newNode = <TableNodeType>{
       ...node,
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
       position: {
-        x: nodeWithPosition.x - (node.width ?? defaultNodeWidth) / 2,
-        y: nodeWithPosition.y - (node.height ?? defaultNodeHeight) / 2,
+        x: dagreNode.x - dagreNode.width / 2,
+        y: dagreNode.y - dagreNode.height / 2,
       },
     };
 
@@ -46,4 +70,4 @@ export const getLayoutedGraph = (nodes: NodeWithGuessedSize[], edges: Edge[]) =>
   });
 
   return newNodes;
-};
+}

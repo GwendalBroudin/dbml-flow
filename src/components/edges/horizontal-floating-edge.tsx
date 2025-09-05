@@ -62,31 +62,29 @@ function HorizontalFloatingEdge({
   }
 
   return (
-    <>
-      <BaseEdge
-        path={edgePath}
-        id={id}
-        strokeWidth={5}
-        style={style}
-        markerStart={markerStart}
-        markerEnd={markerEnd}
-        //cause error React does not recognize the `pathOptions` prop etc...
-        // {...props}
-      >
-        <EdgeLabels
-          displayed={!!animated}
-          data={data}
-          labelX={labelX}
-          labelY={labelY}
-          sx={sx}
-          sy={sy}
-          tx={tx}
-          ty={ty}
-          sourcePos={sourcePos}
-          targetPos={targetPos}
-        />
-      </BaseEdge>
-    </>
+    <BaseEdge
+      path={edgePath}
+      id={id}
+      strokeWidth={5}
+      style={style}
+      markerStart={markerStart}
+      markerEnd={markerEnd}
+      //cause error React does not recognize the `pathOptions` prop etc...
+      // {...props}
+    >
+      <EdgeLabels
+        displayed={!!animated}
+        data={data}
+        labelX={labelX}
+        labelY={labelY}
+        sx={sx}
+        sy={sy}
+        tx={tx}
+        ty={ty}
+        sourcePos={sourcePos}
+        targetPos={targetPos}
+      />
+    </BaseEdge>
   );
 }
 

@@ -9,6 +9,7 @@ import {
   FitView,
   Node,
   NodeChange,
+  NodeDimensionChange,
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
@@ -19,7 +20,7 @@ import { create } from "zustand";
 import { StartupCode } from "@/components/editor/editor.constant";
 import {
   extractPositions,
-  parseDatabaseToNodesAndEdges,
+  parseDatabaseToGraph,
   parser,
   setPositionsInCode,
 } from "@/lib/dbml/parser";
@@ -28,15 +29,25 @@ import {
   EdgesRelativeData,
 } from "@/lib/flow/edges.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
-import {
-  applySavedPositions,
-  toNodeIndex
-} from "@/lib/layout/layout.helpers";
+import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
-import { NodePositionIndex, TableNodeType } from "@/types/nodes.types";
+import {
+  GroupNodeType,
+  NodePositionIndex,
+  NodeType,
+  TableNodeType,
+} from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
+import { getNodesBounds } from "@/lib/math/math.helper";
+import {
+  computeRelatedGroupChanges,
+  getBoundedGroups,
+} from "@/lib/flow/groups.helpers";
+import { toMapId } from "@/lib/utils";
+import { CompilerError } from "@dbml/core/types/parse/error";
+import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 
 // Helper type for parse results
 type ParseResult =
@@ -47,14 +58,19 @@ export type AppState = {
   // Editor State
   code: string;
   database: Database | null;
+  hasTextFocus: boolean;
   editorModel: editor.ITextModel | null;
+  globalError: any;
   colorMode: ColorMode;
   savePositionsInCode: boolean;
+  saveCodeInUrl: boolean;
   firstRender: boolean;
 
   // ReactFlow state
-  nodes: TableNodeType[];
+  nodes: NodeType[];
   edges: Edge[];
+  groupNodes: GroupNodeType[];
+  tableNodes: TableNodeType[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
   edgesRelativeData: EdgesRelativeData;
@@ -63,9 +79,11 @@ export type AppState = {
 
   // Editor Actions
   setCode: (code: string) => void;
+  setEditorTextFocus: (focus: boolean) => void;
   setEditorModel: (model: editor.ITextModel | null) => void;
   parseDBML: (code: string) => ParseResult;
   setMarkers: (markers: editor.IMarkerData[]) => void;
+  setGlobalError: (error: any) => void;
   clearMarkers: () => void;
   updateViewerFromDatabase: (database: Database) => void;
 
@@ -73,18 +91,16 @@ export type AppState = {
   setfirstRender: (firstRender: boolean) => void;
   setColorMode: (mode: ColorMode) => void;
   setMinimap: (minimap: boolean) => void;
-  onNodesChange: OnNodesChange<TableNodeType>;
+  onNodesChange: OnNodesChange<NodeType>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
-  setNodes: (nodes: TableNodeType[]) => void;
-  setEdges: (edges: Edge[]) => void;
-  onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => void;
+  onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
 
   setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
-const debounceTime = 300;
+const debounceTime = 600;
 const setCodeInUrlDebounced = debounce(setCodeInUrl, debounceTime);
 const setPositionsInCodeDebounced = debounce(
   (
@@ -102,14 +118,19 @@ const setPositionsInCodeDebounced = debounce(
 const useStore = create<AppState>((set, get) => ({
   // -------- Initial State --------
   code: "",
+  hasTextFocus: false,
   database: null,
   editorModel: null,
+  globalError: null,
   colorMode: "light",
-  nodes: [] as TableNodeType[],
+  nodes: [] as NodeType[],
+  groupNodes: [] as GroupNodeType[],
+  tableNodes: [] as TableNodeType[],
   edges: [] as Edge[],
   savedPositions: {},
   minimap: false,
   savePositionsInCode: true,
+  saveCodeInUrl: true,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
@@ -123,22 +144,32 @@ const useStore = create<AppState>((set, get) => ({
   // -------- Editor Actions --------
   setEditorModel: (model) => set({ editorModel: model }),
   setColorMode: (mode) => set({ colorMode: mode }),
+  setEditorTextFocus: (focus) => set({ hasTextFocus: focus }),
   setCode: (code) => {
-    setCodeInUrlDebounced(code);
+    const { saveCodeInUrl } = get();
+    if (saveCodeInUrl) setCodeInUrlDebounced(code);
     set({ code });
   },
 
   parseDBML: (code) => {
+    const { clearMarkers, updateViewerFromDatabase, setMarkers } = get();
+    set({ globalError: null });
     try {
       const newDB = parser.parse(code, "dbmlv2");
       set({ database: newDB });
-      const { clearMarkers, updateViewerFromDatabase } = get();
 
       clearMarkers();
       updateViewerFromDatabase(newDB);
 
       return { success: true, database: newDB };
-    } catch (error) {
+    } catch (error: any) {
+      if ((error as CompilerError)?.diags) {
+        const markers = formatDiagnosticsForMonaco(error as CompilerError);
+        setMarkers(markers);
+      } else {
+        console.error("Unknown error:", error);
+        set({ globalError: error });
+      }
       return { success: false, error };
     }
   },
@@ -147,24 +178,42 @@ const useStore = create<AppState>((set, get) => ({
     if (!database) return;
     console.log("database", database);
 
-    const { savedPositions: initialSavedPositions, setSavedPositions } = get();
+    const {
+      savedPositions: initialSavedPositions,
+      setSavedPositions,
+      tableNodes: oldTableNode,
+      groupNodes: oldGroupNodes,
+    } = get();
 
     // Get initial layout
-    let { nodes, edges } = parseDatabaseToNodesAndEdges(database);
+    let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
 
     const savedPositions = initialSavedPositions;
 
-    if (nodes.length !== Object.keys(savedPositions).length) {
-      nodes = getLayoutedGraph(nodes, edges);
+    if (
+      oldTableNode.length !== tableNodes.length ||
+      oldGroupNodes.length !== groupNodes.length
+    ) {
+      tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
     }
 
     // Preserve existing node positions
-    nodes = applySavedPositions(nodes, savedPositions);
-    set({ nodes, edges });
-    setSavedPositions(nodes);
+    tableNodes = applySavedPositions(tableNodes, savedPositions);
+
+    groupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
+    set({
+      tableNodes,
+      groupNodes,
+      nodes: [...groupNodes, ...tableNodes],
+      edges,
+    });
+    setSavedPositions(tableNodes);
   },
 
   // Editor markers management
+  setGlobalError: (error) => {
+    set({ globalError: error });
+  },
   setMarkers: (markers) => {
     const { editorModel } = get();
     if (editorModel) {
@@ -182,27 +231,51 @@ const useStore = create<AppState>((set, get) => ({
   // -------- Flow Actions --------
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
-  setNodes: (nodes: TableNodeType[]) => set({ nodes }),
-  setEdges: (edges: Edge[]) => set({ edges }),
 
-  onNodesChange: (changes: NodeChange<TableNodeType>[]) => {
-    const nodes = applyNodeChanges(changes, get().nodes);
-    // const edges = getEdgePositions(get().edges, nodes);
-    const edgesRelativeData = computeEdgesRelativeData(nodes, get().edges);
-    get().setSavedPositions(nodes);
-    set({ nodes, edgesRelativeData });
+  onNodesChange: (changes: NodeChange<NodeType>[]) => {
+    const { nodes } = get();
+    const oldNodesById = toMapId<string, NodeType>(nodes);
+
+    const computedChanges = computeRelatedGroupChanges(changes, oldNodesById);
+
+    let newNodes = applyNodeChanges([...changes, ...computedChanges], nodes);
+
+    if (computedChanges.some((c) => c.type === "dimensions")) {
+      newNodes = newNodes.map((n) => {
+        const change = computedChanges.find(
+          (c) => c.type === "dimensions" && c.id === n.id
+        ) as NodeDimensionChange;
+        if (!change) return n;
+        return {
+          ...n,
+          width: change.dimensions!.width,
+          height: change.dimensions!.height,
+        };
+      });
+    }
+
+    const edgesRelativeData = computeEdgesRelativeData(
+      toMapId<string, NodeType>(newNodes),
+      get().edges
+    );
+
+    get().setSavedPositions(newNodes);
+    set({ nodes: newNodes, edgesRelativeData });
   },
+
   onEdgesChange: (changes: EdgeChange[]) => {
     set({
       edges: applyEdgeChanges(changes, get().edges),
     });
   },
+
   onConnect: (connection: Connection) => {
     set({
       edges: addEdge(connection, get().edges),
     });
   },
-  onChange: (selected: OnSelectionChangeParams<TableNodeType, Edge>) => {
+
+  onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => {
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
       animated: selected.nodes.some(
@@ -216,18 +289,25 @@ const useStore = create<AppState>((set, get) => ({
   // Layout management
   setSavedPositions: (nodes) => {
     const savedPositions = toNodeIndex(nodes);
-    const { code, database, savePositionsInCode, setCode } = get();
+    const { code, database, savePositionsInCode, setCode, hasTextFocus } =
+      get();
     set({ savedPositions });
-    if (savePositionsInCode && database) {
+    if (!hasTextFocus && savePositionsInCode && database) {
       setPositionsInCodeDebounced(code, savedPositions, setCode);
     }
   },
   onLayout: (direction, fitView) => {
-    const { nodes, edges } = get();
-    const newNodes = getLayoutedGraph(nodes, edges);
+    const { tableNodes, groupNodes, edges } = get();
+    const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
 
-    set({ nodes: newNodes });
-    get().setSavedPositions(newNodes);
+    const newGroupNodes = getBoundedGroups(groupNodes, toMapId(newTableNodes));
+
+    set({
+      tableNodes: newTableNodes,
+      groupNodes: newGroupNodes,
+      nodes: [...newGroupNodes, ...newTableNodes],
+    });
+    get().setSavedPositions(tableNodes);
     setTimeout(() => fitView(), 0);
   },
 }));
