@@ -46,6 +46,8 @@ import {
   getBoundedGroups,
 } from "@/lib/flow/groups.helpers";
 import { toMapId } from "@/lib/utils";
+import { CompilerError } from "@dbml/core/types/parse/error";
+import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 
 // Helper type for parse results
 type ParseResult =
@@ -58,6 +60,7 @@ export type AppState = {
   database: Database | null;
   hasTextFocus: boolean;
   editorModel: editor.ITextModel | null;
+  globalError: any;
   colorMode: ColorMode;
   savePositionsInCode: boolean;
   saveCodeInUrl: boolean;
@@ -80,6 +83,7 @@ export type AppState = {
   setEditorModel: (model: editor.ITextModel | null) => void;
   parseDBML: (code: string) => ParseResult;
   setMarkers: (markers: editor.IMarkerData[]) => void;
+  setGlobalError: (error: any) => void;
   clearMarkers: () => void;
   updateViewerFromDatabase: (database: Database) => void;
 
@@ -117,6 +121,7 @@ const useStore = create<AppState>((set, get) => ({
   hasTextFocus: false,
   database: null,
   editorModel: null,
+  globalError: null,
   colorMode: "light",
   nodes: [] as NodeType[],
   groupNodes: [] as GroupNodeType[],
@@ -147,16 +152,24 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   parseDBML: (code) => {
+    const { clearMarkers, updateViewerFromDatabase, setMarkers } = get();
+    set({ globalError: null });
     try {
       const newDB = parser.parse(code, "dbmlv2");
       set({ database: newDB });
-      const { clearMarkers, updateViewerFromDatabase } = get();
 
       clearMarkers();
       updateViewerFromDatabase(newDB);
 
       return { success: true, database: newDB };
-    } catch (error) {
+    } catch (error: any) {
+      if ((error as CompilerError)?.diags) {
+        const markers = formatDiagnosticsForMonaco(error as CompilerError);
+        setMarkers(markers);
+      } else {
+        console.error("Unknown error:", error);
+        set({ globalError: error });
+      }
       return { success: false, error };
     }
   },
@@ -165,17 +178,25 @@ const useStore = create<AppState>((set, get) => ({
     if (!database) return;
     console.log("database", database);
 
-    const { savedPositions: initialSavedPositions, setSavedPositions, tableNodes: oldTableNode, groupNodes: oldGroupNodes } = get();
+    const {
+      savedPositions: initialSavedPositions,
+      setSavedPositions,
+      tableNodes: oldTableNode,
+      groupNodes: oldGroupNodes,
+    } = get();
 
     // Get initial layout
     let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
 
     const savedPositions = initialSavedPositions;
 
-    if (oldTableNode.length !== tableNodes.length || oldGroupNodes.length !== groupNodes.length) {
+    if (
+      oldTableNode.length !== tableNodes.length ||
+      oldGroupNodes.length !== groupNodes.length
+    ) {
       tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
     }
-    
+
     // Preserve existing node positions
     tableNodes = applySavedPositions(tableNodes, savedPositions);
 
@@ -190,6 +211,9 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // Editor markers management
+  setGlobalError: (error) => {
+    set({ globalError: error });
+  },
   setMarkers: (markers) => {
     const { editorModel } = get();
     if (editorModel) {

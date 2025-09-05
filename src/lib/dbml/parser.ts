@@ -170,7 +170,6 @@ export function isNotNull(field: Field): boolean {
 // Guess size function for nodes
 
 let fontWidth = 7; //  getTextWidth() return wrong value on start up, to be investigated
-console.log("fontSize", fontWidth);
 
 const inlinePadding = 8;
 
