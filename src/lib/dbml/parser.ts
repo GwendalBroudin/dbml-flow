@@ -4,7 +4,7 @@ import {
   FIELD_SPACING,
   HEADER_HEIGHT,
   PRIMARY_KEY_WIDTH,
-} from "@/components/constants";
+} from "@/components/table-constants";
 import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
 import {
   ERRelationTypes,

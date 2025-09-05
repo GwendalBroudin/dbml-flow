@@ -6,7 +6,7 @@ import Table from "@dbml/core/types/model_structure/table";
 import { type NodeProps, Position } from "@xyflow/react";
 import { KeyRound } from "lucide-react";
 import { BaseNode, BaseNodeHeader } from "./base-node";
-import { FIELD_HEIGHT, FIELD_SPACING, PRIMARY_KEY_WIDTH } from "./constants";
+import { FIELD_HEIGHT, FIELD_SPACING, PRIMARY_KEY_WIDTH } from "./table-constants";
 import { LabeledHandle } from "./labeled-handle";
 import { TableBody, TableCell, TableRow } from "./ui/table";
 

@@ -2,7 +2,7 @@ import { GroupNodeType, NodeType, NodeTypes } from "@/types/nodes.types";
 import { getNodesBounds, NodeBounds } from "../math/math.helper";
 import { NodeChange, NodePositionChange } from "@xyflow/react";
 import { vectorAdd, vectorSub } from "../math/vector.helper";
-import { GROUP_PADDING, HEADER_HEIGHT } from "@/components/constants";
+import { GROUP_PADDING, HEADER_HEIGHT } from "@/components/table-constants";
 
 /**
  * Calculate and update group nodes parameters (width, height, position) based on their children nodes bounds.
