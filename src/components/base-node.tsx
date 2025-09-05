@@ -32,7 +32,7 @@ export const BaseNodeHeader = forwardRef<
 >(({ className, selected, headerColor, label, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("rounded-tl-md rounded-tr-md bg-secondary", className)}
+    className={cn("rounded-tl-sm rounded-tr-sm bg-secondary", className)}
     style={{
       backgroundColor: headerColor,
       opacity: selected ? 0.7 : 0.5,
