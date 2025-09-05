@@ -3,12 +3,12 @@ import {
   ViewportPortal,
   useReactFlow,
   type XYPosition,
-} from '@xyflow/react';
- 
+} from "@xyflow/react";
+
 export default function NodeInspector() {
   const { getInternalNode } = useReactFlow();
   const nodes = useNodes();
- 
+
   return (
     <ViewportPortal>
       <div className="react-flow__devtools-nodeinspector">
@@ -17,19 +17,21 @@ export default function NodeInspector() {
           if (!internalNode) {
             return null;
           }
- 
+
           const absPosition = internalNode?.internals.positionAbsolute;
- 
+
           return (
             <NodeInfo
               key={node.id}
               id={node.id}
               selected={!!node.selected}
-              type={node.type || 'default'}
+              type={node.type || "default"}
               position={node.position}
               absPosition={absPosition}
               width={node.measured?.width ?? 0}
               height={node.measured?.height ?? 0}
+              initialWidth={node.initialWidth}
+              initialHeight={node.initialHeight}
               data={node.data}
             />
           );
@@ -38,7 +40,7 @@ export default function NodeInspector() {
     </ViewportPortal>
   );
 }
- 
+
 type NodeInfoProps = {
   id: string;
   type: string;
@@ -47,9 +49,11 @@ type NodeInfoProps = {
   absPosition: XYPosition;
   width?: number;
   height?: number;
+  initialWidth?: number;
+  initialHeight?: number;
   data: any;
 };
- 
+
 function NodeInfo({
   id,
   type,
@@ -58,33 +62,36 @@ function NodeInfo({
   absPosition,
   width,
   height,
+  initialWidth,
+  initialHeight,
   data,
 }: NodeInfoProps) {
   if (!width || !height) {
     return null;
   }
 
+  const dataString = JSON.stringify({ ...data, table: null }, null, 2);
 
-
-  const dataString = JSON.stringify({...data, table: null}, null, 2);
- 
   return (
     <div
       className="react-flow__devtools-nodeinfo"
       style={{
-        position: 'absolute',
+        position: "absolute",
         transform: `translate(${absPosition.x}px, ${absPosition.y + height}px)`,
         width: width * 2,
       }}
     >
       <div>id: {id}</div>
       <div>type: {type}</div>
-      <div>selected: {selected ? 'true' : 'false'}</div>
+      <div>selected: {selected ? "true" : "false"}</div>
       <div>
         position: {position.x.toFixed(1)}, {position.y.toFixed(1)}
       </div>
       <div>
-        dimensions: {width} × {height}
+        dimensions: {width} × {height}{" "}
+        <i>
+          ({initialWidth} × {initialHeight})
+        </i>
       </div>
       <div>data: {dataString}</div>
     </div>

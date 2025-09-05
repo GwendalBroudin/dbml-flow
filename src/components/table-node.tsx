@@ -1,14 +1,14 @@
 import { getFieldId } from "@/lib/dbml/parser";
+import { cn } from "@/lib/utils";
 import { type TableNodeType } from "@/types/nodes.types";
+import Field from "@dbml/core/types/model_structure/field";
+import Table from "@dbml/core/types/model_structure/table";
 import { type NodeProps, Position } from "@xyflow/react";
+import { KeyRound } from "lucide-react";
 import { BaseNode, BaseNodeHeader } from "./base-node";
+import { FIELD_HEIGHT, FIELD_SPACING, PRIMARY_KEY_WIDTH } from "./constants";
 import { LabeledHandle } from "./labeled-handle";
 import { TableBody, TableCell, TableRow } from "./ui/table";
-import Field from "@dbml/core/types/model_structure/field";
-import { KeyRound } from "lucide-react";
-import Table from "@dbml/core/types/model_structure/table";
-import { cn } from "@/lib/utils";
-import { FIELD_HEIGHT } from "./constants";
 
 function TableField(field: Field, table: Table) {
   const indexes = table.indexes.filter((i) =>
@@ -24,15 +24,19 @@ function TableField(field: Field, table: Table) {
       key={field.name}
       className="relative text-sm"
       style={{
-        height: FIELD_HEIGHT - 1, // minus border bottom
+        height: FIELD_HEIGHT,
+        // borderBottomWidth: FIELD_BORDER, // handled by TableRow
         overflow: "hidden",
       }}
     >
       <TableCell
         className={cn(
-          "pl-0 pr-6 flex items-center",
-          unique ? "font-bold" : "font-light"
+          "py-0.5 pl-0 flex items-center",
+          unique ? "font-semibold" : "font-normal"
         )}
+        style={{
+          paddingRight: FIELD_SPACING
+        }}
       >
         <LabeledHandle
           id={getFieldId(field)}
@@ -40,11 +44,12 @@ function TableField(field: Field, table: Table) {
           type="target"
           position={Position.Left}
           className="bold"
+          labelClassName="p-0 pl-2"
         />
-        {attribute}
+        <div style={{ width: PRIMARY_KEY_WIDTH }} className="flex justify-end">{attribute}</div>
       </TableCell>
 
-      <TableCell className="pr-0 text-right font-thin">
+      <TableCell className="py-0.5 px-0 text-right font-light">
         <LabeledHandle
           id={getFieldId(field)}
           title={field.type.type_name}

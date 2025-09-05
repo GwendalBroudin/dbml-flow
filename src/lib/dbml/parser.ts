@@ -1,4 +1,10 @@
-import { FIELD_HEIGHT, HEADER_HEIGHT } from "@/components/constants";
+import {
+  FIELD_BORDER,
+  FIELD_HEIGHT_TOTAL,
+  FIELD_SPACING,
+  HEADER_HEIGHT,
+  PRIMARY_KEY_WIDTH,
+} from "@/components/constants";
 import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
 import {
   ERRelationTypes,
@@ -163,9 +169,10 @@ export function isNotNull(field: Field): boolean {
 
 // Guess size function for nodes
 
-const fontSize = 11; // should be 14 but gets better approximations
+let fontWidth = 7; //  getTextWidth() return wrong value on start up, to be investigated
+console.log("fontSize", fontWidth);
 
-const inlinePadding = 12;
+const inlinePadding = 8;
 
 export function guessSize(table: Table) {
   const longestField = table.fields
@@ -174,8 +181,13 @@ export function guessSize(table: Table) {
       return e.length > longest.length ? e : longest;
     }, "");
   return {
-    width: longestField.length * fontSize + inlinePadding * 2,
-    height: table.fields.length * FIELD_HEIGHT + HEADER_HEIGHT,
+    width:
+      longestField.length * fontWidth +
+      inlinePadding * 2 +
+      PRIMARY_KEY_WIDTH +
+      FIELD_SPACING +
+      FIELD_BORDER * 2,
+    height: table.fields.length * FIELD_HEIGHT_TOTAL + HEADER_HEIGHT,
   };
 }
 // #endregion

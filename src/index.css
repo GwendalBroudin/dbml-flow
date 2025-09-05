@@ -1,6 +1,7 @@
 @plugin "tailwindcss-animate";
-
 @custom-variant dark (&:is(.dark *));
+
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;400;600;800&display=swap');
 @import "tailwindcss";
 
 body {
@@ -21,8 +22,8 @@ h1 {
 
 html,
 body {
-  margin: 0;
-  font-family: sans-serif;
+  margin: 0;  
+  font-family: 'Inconsolata', monospace;
   box-sizing: border-box;
 }
 

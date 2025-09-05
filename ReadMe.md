@@ -28,6 +28,8 @@
 - [x] Viewer mode
 - [ ] Download dbml file from url (add warning when try to modify code)
 
+## Bugs
+- [ ] getTextWidth() return wrong value on startup 
 
 # Sources 
 

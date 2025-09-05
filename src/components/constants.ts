@@ -1,4 +1,9 @@
 export const HEADER_HEIGHT = 40 as const;
-export const FIELD_HEIGHT = 32 as const;
+export const FIELD_HEIGHT = 24 as const;
+export const FIELD_BORDER = 1 as const;
+export const FIELD_HEIGHT_TOTAL = FIELD_HEIGHT + FIELD_BORDER;
+
+export const PRIMARY_KEY_WIDTH = 17 as const;
+export const FIELD_SPACING = 12 as const;
 
 export const GROUP_PADDING = 10 as const;
