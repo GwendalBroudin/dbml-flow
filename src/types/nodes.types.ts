@@ -6,10 +6,18 @@ export type TableNodeData = {
   label: string;
   table: Table;
   index?: number;
-  parentId?: string; // group id  
+  parentId?: string; // group id
 };
-
 export type TableNodeType = Node<TableNodeData, "table">;
+
+export type GroupNodeData = {
+  id: string;
+  label: string;
+  nodeIds: string[];
+};
+export type GroupNodeType = Node<GroupNodeData, "group">;
+
+export type NodeType = TableNodeType | GroupNodeType;
 
 export type ERRelationTypes = "oneOptionnal" | "one" | "many";
 
@@ -26,13 +34,3 @@ export type TableEdgeType = Edge<TableEdgeData>;
 export type NodePositionIndex = {
   [nodeId: string]: [x: number, y: number];
 };
-
-export type GroupNodeData = {
-  id: string;
-  label: string;
-  nodeIds: string[];
-};
-
-export type GroupNodeType = Node<GroupNodeData, "group">;
-
-export type NodeType = TableNodeType | GroupNodeType;

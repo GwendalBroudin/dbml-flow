@@ -8,7 +8,7 @@ import useStore from "@/state/store";
 import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 
 const DBMLEditor: React.FC = () => {
-  const { code, setCode, setEditorModel, parseDBML, setMarkers } = useStore();
+  const { code, setCode, setEditorModel, parseDBML, setMarkers, setEditorTextFocus } = useStore();
 
   // Error handling utility
   const handleParserError = useCallback(
@@ -29,6 +29,8 @@ const DBMLEditor: React.FC = () => {
   const handleEditorMount: OnMount = useCallback(
     (editor) => {
       setEditorModel(editor.getModel());
+      editor.onDidFocusEditorText(() => setEditorTextFocus(true));
+      editor.onDidBlurEditorText(() => setEditorTextFocus(false));
     },
     [setEditorModel]
   );

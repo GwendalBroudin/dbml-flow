@@ -41,7 +41,11 @@ import Database from "@dbml/core/types/model_structure/database";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
 import { getNodesBounds } from "@/lib/math/math.helper";
-import { computeRelatedGroupChanges, getBoundedGroups } from "@/lib/flow/groups.helpers";
+import {
+  computeRelatedGroupChanges,
+  getBoundedGroups,
+} from "@/lib/flow/groups.helpers";
+import { toMapId } from "@/lib/utils";
 
 // Helper type for parse results
 type ParseResult =
@@ -52,6 +56,7 @@ export type AppState = {
   // Editor State
   code: string;
   database: Database | null;
+  hasTextFocus: boolean;
   editorModel: editor.ITextModel | null;
   colorMode: ColorMode;
   savePositionsInCode: boolean;
@@ -71,6 +76,7 @@ export type AppState = {
 
   // Editor Actions
   setCode: (code: string) => void;
+  setEditorTextFocus: (focus: boolean) => void;
   setEditorModel: (model: editor.ITextModel | null) => void;
   parseDBML: (code: string) => ParseResult;
   setMarkers: (markers: editor.IMarkerData[]) => void;
@@ -108,6 +114,7 @@ const setPositionsInCodeDebounced = debounce(
 const useStore = create<AppState>((set, get) => ({
   // -------- Initial State --------
   code: "",
+  hasTextFocus: false,
   database: null,
   editorModel: null,
   colorMode: "light",
@@ -132,6 +139,7 @@ const useStore = create<AppState>((set, get) => ({
   // -------- Editor Actions --------
   setEditorModel: (model) => set({ editorModel: model }),
   setColorMode: (mode) => set({ colorMode: mode }),
+  setEditorTextFocus: (focus) => set({ hasTextFocus: focus }),
   setCode: (code) => {
     const { saveCodeInUrl } = get();
     if (saveCodeInUrl) setCodeInUrlDebounced(code);
@@ -168,10 +176,7 @@ const useStore = create<AppState>((set, get) => ({
       tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
     }
 
-    const nodesById = new Map<string, NodeType>(
-      tableNodes.map((n) => [n.id, n])
-    );
-    groupNodes = getBoundedGroups(groupNodes, nodesById);
+    groupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
 
     // Preserve existing node positions
     tableNodes = applySavedPositions(tableNodes, savedPositions);
@@ -205,7 +210,7 @@ const useStore = create<AppState>((set, get) => ({
 
   onNodesChange: (changes: NodeChange<NodeType>[]) => {
     const { nodes } = get();
-    const oldNodesById = new Map<string, NodeType>(nodes.map((n) => [n.id, n]));
+    const oldNodesById = toMapId<string, NodeType>(nodes);
 
     const computedChanges = computeRelatedGroupChanges(changes, oldNodesById);
 
@@ -225,15 +230,10 @@ const useStore = create<AppState>((set, get) => ({
       });
     }
 
-    const newNodesById = new Map<string, NodeType>(
-      newNodes.map((n) => [n.id, n])
-    );
-
     const edgesRelativeData = computeEdgesRelativeData(
-      newNodesById,
+      toMapId<string, NodeType>(newNodes),
       get().edges
     );
-    // getBoundedGroups(nodesById, false);
 
     get().setSavedPositions(newNodes);
     set({ nodes: newNodes, edgesRelativeData });
@@ -265,9 +265,10 @@ const useStore = create<AppState>((set, get) => ({
   // Layout management
   setSavedPositions: (nodes) => {
     const savedPositions = toNodeIndex(nodes);
-    const { code, database, savePositionsInCode, setCode } = get();
+    const { code, database, savePositionsInCode, setCode, hasTextFocus } =
+      get();
     set({ savedPositions });
-    if (savePositionsInCode && database) {
+    if (!hasTextFocus && savePositionsInCode && database) {
       setPositionsInCodeDebounced(code, savedPositions, setCode);
     }
   },
@@ -275,11 +276,7 @@ const useStore = create<AppState>((set, get) => ({
     const { tableNodes, groupNodes, edges } = get();
     const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
 
-    const tableNodesById = new Map<string, NodeType>(
-      tableNodes.map((n) => [n.id, n])
-    );
-
-    const newGroupNodes = getBoundedGroups(groupNodes, tableNodesById);
+    const newGroupNodes = getBoundedGroups(groupNodes, toMapId(newTableNodes));
 
     set({
       tableNodes: newTableNodes,
@@ -294,4 +291,3 @@ const useStore = create<AppState>((set, get) => ({
 useStore.getState().initState();
 
 export default useStore;
-
