@@ -3,20 +3,17 @@ import { cn } from "@/lib/utils";
 import { type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
-import { Handle, type NodeProps, Position } from "@xyflow/react";
-import { ChevronDown, ChevronUp, KeyRound } from "lucide-react";
-import { BaseNode, BaseNodeHeader } from "./base-node";
+import { type NodeProps, Position } from "@xyflow/react";
+import { KeyRound } from "lucide-react";
+import { BaseNode } from "./base-node";
+import { LabeledHandle } from "./labeled-handle";
 import {
   FIELD_HEIGHT,
   FIELD_SPACING,
   PRIMARY_KEY_WIDTH,
 } from "./table-constants";
-import { LabeledHandle } from "./labeled-handle";
+import { TableFoldHeader } from "./table-fold-header";
 import { TableBody, TableCell, TableRow } from "./ui/table";
-import { HiddenHandle } from "./hidden-handle";
-import { forwardRef, HTMLAttributes, useCallback } from "react";
-import useStore from "@/state/store";
-import { size } from "lodash-es";
 
 function TableField(field: Field, table: Table) {
   const indexes = table.indexes.filter((i) =>
@@ -75,10 +72,9 @@ function TableField(field: Field, table: Table) {
 }
 
 export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
-  console.log("Render TableNode", id);
   return (
     <BaseNode id={id} className="p-0 flex flex-col" selected={selected}>
-      <DBHeader
+      <TableFoldHeader
         id={id}
         selected={selected}
         headerColor={data.color}
@@ -88,54 +84,13 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
       />
 
       {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
-      <table className="border-spacing-10 overflow-visible">
-        <TableBody>
-          {data.table.fields.map((field) => TableField(field, data.table))}
-        </TableBody>
-      </table>
+      {!data.folded && (
+        <table className="border-spacing-10 overflow-visible">
+          <TableBody>
+            {data.table.fields.map((field) => TableField(field, data.table))}
+          </TableBody>
+        </table>
+      )}
     </BaseNode>
   );
 };
-
-export const DBHeader = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement> & {
-    selected?: boolean;
-    headerColor?: string;
-    label: string;
-    id: string;
-    color?: string;
-    folded?: boolean;
-  }
->(
-  (
-    { id, className, selected, headerColor, folded, label, color, ...props },
-    ref
-  ) => {
-    const { foldNode } = useStore();
-    const callback = useCallback(() => {
-      foldNode(id, !folded);
-    }, [foldNode, id, folded]);
-
-    const buttonProp = { onClick: callback, size: "0.7rem" };
-    const foldButton = folded ? (
-      <ChevronDown {...buttonProp} />
-    ) : (
-      <ChevronUp {...buttonProp} />
-    );
-
-    return (
-      <div className="flex relative items-center">
-        <HiddenHandle id={id} type="target" position={Position.Left} />
-        <BaseNodeHeader
-          headerColor={color}
-          label={label}
-          selected={selected}
-          className="flex-auto"
-          beforeTitle={foldButton}
-        />
-        <HiddenHandle id={id} type="source" position={Position.Right} />
-      </div>
-    );
-  }
-);

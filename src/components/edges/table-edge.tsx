@@ -64,8 +64,6 @@ function TableEdge({
     markerEnd || ""
   );
 
-  console.log("Render TableEdge", id, calcSourceHandleId, calcTargetHandleId);
-
   const { edgePath, labelX, labelY, sx, sy, tx, ty, sourcePos, targetPos } =
     useMemo(
       () =>

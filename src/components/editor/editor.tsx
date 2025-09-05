@@ -60,7 +60,6 @@ const DBMLEditor: React.FC = () => {
 
 const GlobalErrorMessage: React.FC<{ error: any }> = ({ error }) => {
   const message = error?.message ?? error?.toString();
-  console.log("Rendering GlobalErrorMessage", error);
   return message ? (
     <div className="p-2 bg-red-400 text-white flex-auto shrink-0 max-h-16 overflow-y-auto break-words">
       <p>{message}</p>

@@ -95,7 +95,7 @@ export function mapTableToNode(table: Table) {
       label: table.name,
       groupId: table.group ? getGroupId(table.group) : undefined,
       color: table.headerColor,
-      folded: true,
+      folded: false,
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,
