@@ -102,7 +102,7 @@ export function computeRelatedGroupChanges(
 
 export function getGroupDimensionsAndPosition(
   bounds: NodeBounds,
-  padding = 20
+  padding: number
 ) {
   return {
     width: bounds.width + padding * 2,

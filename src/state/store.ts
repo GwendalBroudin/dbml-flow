@@ -165,21 +165,21 @@ const useStore = create<AppState>((set, get) => ({
     if (!database) return;
     console.log("database", database);
 
-    const { savedPositions: initialSavedPositions, setSavedPositions } = get();
+    const { savedPositions: initialSavedPositions, setSavedPositions, tableNodes: oldTableNode, groupNodes: oldGroupNodes } = get();
 
     // Get initial layout
     let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
 
     const savedPositions = initialSavedPositions;
 
-    if (tableNodes.length !== Object.keys(savedPositions).length) {
+    if (oldTableNode.length !== tableNodes.length || oldGroupNodes.length !== groupNodes.length) {
       tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
     }
-
-    groupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
-
+    
     // Preserve existing node positions
     tableNodes = applySavedPositions(tableNodes, savedPositions);
+
+    groupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
     set({
       tableNodes,
       groupNodes,

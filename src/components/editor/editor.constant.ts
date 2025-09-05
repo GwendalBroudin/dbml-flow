@@ -56,7 +56,7 @@ Table countries {
   code int [pk]
   name varchar
   continent_name varchar
- }
+}
 
 // Creating references
 // You can also define relaionship separately
@@ -139,4 +139,4 @@ TableGroup ecommerce {
   ecommerce.products
   ecommerce.product_tags
 }
-  `;
+`;

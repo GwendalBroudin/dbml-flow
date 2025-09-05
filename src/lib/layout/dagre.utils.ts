@@ -3,20 +3,33 @@ import dagre from "@dagrejs/dagre";
 import { Edge } from "@xyflow/react";
 import { getNodeSize, getNodesBounds } from "../math/math.helper";
 
+const rankdir = "LR";
+
 const dagreGraph = new dagre.graphlib.Graph({
   multigraph: true,
   compound: true,
-}).setDefaultEdgeLabel(() => ({}));
+})
+  .setDefaultEdgeLabel(() => ({}))
+  .setGraph({ rankdir, compound: true, ranksep: 30 });
 
-const rankdir = "LR";
+function clearDagreGraph() {
+  dagreGraph.nodes().forEach((node) => {
+    dagreGraph.removeNode(node);
+  });
+  dagreGraph.edges().forEach((edge) => {
+    dagreGraph.removeEdge(edge.v, edge.w, edge.name);
+  });
+}
 
 export function getLayoutedGraph(
   tableNodes: TableNodeType[],
   groupNodes: GroupNodeType[],
-  edges: Edge[],
+  edges: Edge[]
 ) {
   dagreGraph.setGraph({ rankdir, compound: true, ranksep: 30 });
+  clearDagreGraph();
 
+  // Set nodes with their width and height
   tableNodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
       ...getNodeSize(node),
