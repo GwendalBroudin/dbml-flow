@@ -21,6 +21,7 @@ import Field from "@dbml/core/types/model_structure/field";
 import Ref from "@dbml/core/types/model_structure/ref";
 import Table from "@dbml/core/types/model_structure/table";
 import TableGroup from "@dbml/core/types/model_structure/tableGroup";
+import { get } from "http";
 
 //#region DBML to Nodes and Edges
 export type RefDic = { [k: string]: Ref[] };
@@ -59,7 +60,7 @@ export const paddingY = 20;
 
 function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
   const childNodes = g.tables
-    .map(getTableOrGroupId)
+    .map(getTableId)
     .map((id) => nodes.get(id)!);
   const initialWidth =
     childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
@@ -68,12 +69,12 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
     childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
 
   return <GroupNodeType>{
-    id: getTableOrGroupId(g),
+    id: getGroupId(g),
     type: NodeTypes.TableGroup,
     zIndex: -1001,
     data: {
       label: g.name,
-      nodeIds: g.tables.map(getTableOrGroupId),
+      nodeIds: g.tables.map(getTableId),
       color: g.color,
     },
     initialWidth,
@@ -82,7 +83,7 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
 }
 
 export function mapTableToNode(table: Table) {
-  const tableId = getTableOrGroupId(table);
+  const tableId = getTableId(table);
 
   const guessed = guessSize(table);
   return <TableNodeType>{
@@ -92,7 +93,7 @@ export function mapTableToNode(table: Table) {
     data: {
       table,
       label: table.name,
-      parentId: table.group ? getTableOrGroupId(table.group) : undefined,
+      parentId: table.group ? getGroupId(table.group) : undefined,
       color: table.headerColor,
     },
     initialWidth: guessed.width,
@@ -114,8 +115,8 @@ export function mapToEdge(ref: Ref) {
   const targetRelationType = getRelationType(targetEndPoint, sourceField);
   return <TableEdgeType>{
     id: ref.id.toString(),
-    source: getTableOrGroupId(sourceEndPoint.fields[0].table),
-    target: getTableOrGroupId(targetEndPoint.fields[0].table),
+    source: getTableId(sourceEndPoint.fields[0].table),
+    target: getTableId(targetEndPoint.fields[0].table),
     type: HorizontalFloatingEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
@@ -147,11 +148,21 @@ export function getRelationType(
 
   throw new Error("Unknown relation type");
 }
-export function getTableOrGroupId(table: Table | TableGroup) {
-  return `${table.schema.name}.${table.name}`;
+
+export function getTableId(table: Table) {
+  return `t-${getBaseId(table)}`;
 }
+
+export function getGroupId(group: TableGroup) {
+  return `g-${getBaseId(group)}`;
+}
+
 export function getFieldId(e: Field) {
-  return `${getTableOrGroupId(e.table)}.${e.name}`;
+  return `f-${getBaseId(e.table)}.${e.name}`;
+}
+
+function getBaseId(table: Table | TableGroup) {
+  return `${table.schema.name}.${table.name}`;
 }
 
 export function isNotNull(field: Field): boolean {
