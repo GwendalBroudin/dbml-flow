@@ -35,6 +35,8 @@ import {
   GroupNodeType,
   NodePositionIndex,
   NodeType,
+  NodeTypes,
+  SharedNodeData,
   TableNodeType,
 } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
@@ -69,11 +71,10 @@ export type AppState = {
   // ReactFlow state
   nodes: NodeType[];
   edges: Edge[];
-  groupNodes: GroupNodeType[];
-  tableNodes: TableNodeType[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
   edgesRelativeData: EdgesRelativeData;
+  foldedIds: Set<string>;
   //initialisation
   initState: () => void;
 
@@ -95,6 +96,7 @@ export type AppState = {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
+  foldNode: (nodeId: string, fold: boolean) => void;
 
   setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
@@ -124,10 +126,9 @@ const useStore = create<AppState>((set, get) => ({
   globalError: null,
   colorMode: "light",
   nodes: [] as NodeType[],
-  groupNodes: [] as GroupNodeType[],
-  tableNodes: [] as TableNodeType[],
   edges: [] as Edge[],
   savedPositions: {},
+  foldedIds: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
   saveCodeInUrl: true,
@@ -178,12 +179,12 @@ const useStore = create<AppState>((set, get) => ({
     if (!database) return;
     console.log("database", database);
 
-    const {
-      savedPositions: initialSavedPositions,
-      setSavedPositions,
-      tableNodes: oldTableNode,
-      groupNodes: oldGroupNodes,
-    } = get();
+    const { savedPositions: initialSavedPositions, setSavedPositions } = get();
+
+    const oldTableNode = get().nodes.filter((n) => n.type === NodeTypes.Table);
+    const oldGroupNodes = get().nodes.filter(
+      (n) => n.type === NodeTypes.TableGroup
+    );
 
     // Get initial layout
     let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
@@ -202,8 +203,6 @@ const useStore = create<AppState>((set, get) => ({
 
     groupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
     set({
-      tableNodes,
-      groupNodes,
       nodes: [...groupNodes, ...tableNodes],
       edges,
     });
@@ -232,6 +231,28 @@ const useStore = create<AppState>((set, get) => ({
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
 
+  foldNode: (nodeId: string, fold: boolean) => {
+    const { foldedIds, nodes } = get();
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) {
+      console.warn("Node not found for folding:", nodeId);
+      return;
+    }
+
+    const newFoldedIds = new Set(foldedIds);
+    if (fold) newFoldedIds.add(nodeId);
+    else newFoldedIds.delete(nodeId);
+
+    const newNodes = nodes.map((n) => {
+      if (n.id === nodeId && "data" in n) {
+        return { ...n, data: { ...n.data, folded: fold } };
+      }
+      return n;
+    }) as NodeType[];
+
+    set({ foldedIds: newFoldedIds, nodes: newNodes });
+  },
+
   onNodesChange: (changes: NodeChange<NodeType>[]) => {
     const { nodes } = get();
     const oldNodesById = toMapId<string, NodeType>(nodes);
@@ -240,6 +261,8 @@ const useStore = create<AppState>((set, get) => ({
 
     let newNodes = applyNodeChanges([...changes, ...computedChanges], nodes);
 
+    // Fix: dimension changes seems to not work with applyNodeChanges
+    // so we apply them manually here
     if (computedChanges.some((c) => c.type === "dimensions")) {
       newNodes = newNodes.map((n) => {
         const change = computedChanges.find(
@@ -297,14 +320,16 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
   onLayout: (direction, fitView) => {
-    const { tableNodes, groupNodes, edges } = get();
+    const { nodes, edges } = get();
+
+    const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
+    const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
+
     const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
 
     const newGroupNodes = getBoundedGroups(groupNodes, toMapId(newTableNodes));
 
     set({
-      tableNodes: newTableNodes,
-      groupNodes: newGroupNodes,
       nodes: [...newGroupNodes, ...newTableNodes],
     });
     get().setSavedPositions(tableNodes);

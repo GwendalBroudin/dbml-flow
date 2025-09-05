@@ -2,26 +2,23 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   EdgeProps,
-  InternalNode,
   Position,
   useInternalNode,
 } from "@xyflow/react";
 
-import {
-  distributeMarkers,
-  EdgesRelativeData,
-  getMarkerType,
-} from "@/lib/flow/edges.helpers";
-import { getHandleCoords } from "@/lib/math/math.helper";
 import useStore from "@/state/store";
-import { TableEdgeData } from "@/types/nodes.types";
-import { getSmoothStepPath } from "@xyflow/react";
+import {
+  InternalGroupNode,
+  InternalTableNode,
+  TableEdgeData,
+} from "@/types/nodes.types";
 import { useMemo } from "react";
-import { ERMakerLabels, markerWidth } from "./markers";
+import { ERMakerLabels } from "./markers";
+import { getEdgePath, getTableHandleData } from "./table-edge.helpers";
 
 export const TableEdgeTypeName = "table-edge";
 
-const borderRadius = 5;
+export const borderRadius = 5;
 
 function TableEdge({
   id,
@@ -36,9 +33,38 @@ function TableEdge({
   data,
   ...props
 }: EdgeProps) {
-  const sourceNode = useInternalNode(source);
-  const targetNode = useInternalNode(target);
+  const sourceTableNode = useInternalNode(source) as InternalTableNode;
+  const targetTableNode = useInternalNode(target) as InternalTableNode;
+  const sourceGroupNode = useInternalNode(
+    sourceTableNode?.data.groupId || ""
+  ) as InternalGroupNode;
+  const targetGroupNode = useInternalNode(
+    targetTableNode?.data.groupId || ""
+  ) as InternalGroupNode;
+
   const { edgesRelativeData } = useStore();
+  const {
+    handleId: calcSourceHandleId,
+    marker: calcMarkerStart,
+    folded: sourceFolded,
+  } = getTableHandleData(
+    sourceTableNode,
+    sourceGroupNode,
+    sourceHandleId || "",
+    markerStart || ""
+  );
+  const {
+    handleId: calcTargetHandleId,
+    marker: calcMarkerEnd,
+    folded: targetFolded,
+  } = getTableHandleData(
+    targetTableNode,
+    targetGroupNode,
+    targetHandleId || "",
+    markerEnd || ""
+  );
+
+  console.log("Render TableEdge", id, calcSourceHandleId, calcTargetHandleId);
 
   const { edgePath, labelX, labelY, sx, sy, tx, ty, sourcePos, targetPos } =
     useMemo(
@@ -46,14 +72,14 @@ function TableEdge({
         getEdgePath(
           edgesRelativeData,
           id,
-          targetHandleId || "",
-          sourceHandleId || "",
-          markerStart || "",
-          markerEnd || "",
-          sourceNode,
-          targetNode
+          calcSourceHandleId || "",
+          calcTargetHandleId || "",
+          calcMarkerStart || "",
+          calcMarkerEnd || "",
+          sourceTableNode,
+          targetTableNode
         ),
-      [sourceNode, targetNode, edgesRelativeData]
+      [sourceTableNode, targetTableNode, edgesRelativeData]
     );
 
   if (!edgePath) {
@@ -66,13 +92,15 @@ function TableEdge({
       id={id}
       strokeWidth={5}
       style={style}
-      markerStart={markerStart}
-      markerEnd={markerEnd}
+      markerStart={calcMarkerStart}
+      markerEnd={calcMarkerEnd}
       //cause error React does not recognize the `pathOptions` prop etc...
       // {...props}
     >
       <EdgeLabels
         displayed={!!animated}
+        displaySource={!sourceFolded}
+        displayTarget={!targetFolded}
         data={data}
         labelX={labelX}
         labelY={labelY}
@@ -89,6 +117,8 @@ function TableEdge({
 
 export type EdgeLabelsProps = {
   displayed: boolean;
+  displaySource: boolean;
+  displayTarget: boolean;
   sx: number;
   sy: number;
   tx: number;
@@ -102,6 +132,8 @@ export type EdgeLabelsProps = {
 
 export function EdgeLabels({
   displayed,
+  displaySource,
+  displayTarget,
   sx,
   sy,
   tx,
@@ -125,18 +157,22 @@ export function EdgeLabels({
   return (
     <EdgeLabelRenderer>
       <EdgeLabel label={label} labelX={labelX} labelY={labelY} />
-      <EdgeMarkerLabel
-        label={sourceLabel}
-        labelX={sx}
-        labelY={sy}
-        transX={sourcePos === Position.Right ? 0 : -100}
-      />
-      <EdgeMarkerLabel
-        label={targetLabel}
-        labelX={tx}
-        labelY={ty}
-        transX={targetPos === Position.Right ? 0 : -100}
-      />
+      {displaySource && (
+        <EdgeMarkerLabel
+          label={sourceLabel}
+          labelX={sx}
+          labelY={sy}
+          transX={sourcePos === Position.Right ? 0 : -100}
+        />
+      )}
+      {displayTarget && (
+        <EdgeMarkerLabel
+          label={targetLabel}
+          labelX={tx}
+          labelY={ty}
+          transX={targetPos === Position.Right ? 0 : -100}
+        />
+      )}
     </EdgeLabelRenderer>
   );
 }
@@ -186,63 +222,6 @@ export function EdgeLabel({
       {label}
     </div>
   );
-}
-
-export function getEdgePath(
-  edgesRelativeData: EdgesRelativeData,
-  id: string,
-  targetHandleId: string,
-  sourceHandleId: string,
-  markerStart: string,
-  markerEnd: string,
-  sourceNode: InternalNode | undefined,
-  targetNode: InternalNode | undefined
-) {
-  if (!sourceNode || !targetNode) {
-    return {};
-  }
-
-  const positionData = edgesRelativeData?.positions?.[id];
-  if (!positionData) return {};
-
-  const { sourcePos, targetPos } = positionData;
-  let [sx, sy] = getHandleCoords(sourceNode, sourceHandleId!, sourcePos);
-  let [tx, ty] = getHandleCoords(targetNode, targetHandleId!, targetPos);
-  const offsetH = markerWidth - 4;
-
-  // calc y positions depending on number of different relation types per handle and their positions
-  const sourceSibling = edgesRelativeData?.siblings?.[sourceHandleId!];
-  if (sourceSibling) {
-    const markerType = getMarkerType(markerStart!);
-    sy = distributeMarkers(
-      sy,
-      markerType,
-      sourceSibling[sourcePos as "right" | "left"]?.markerCountMap
-    );
-  }
-  const targetSibling = edgesRelativeData?.siblings?.[targetHandleId!];
-  if (targetSibling) {
-    const markerType = getMarkerType(markerEnd!);
-    ty = distributeMarkers(
-      ty,
-      markerType,
-      targetSibling[targetPos as "right" | "left"]?.markerCountMap
-    );
-  }
-
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    // offset to the left or right depending on the source position
-    sourceX: sx + (sourcePos === "left" ? -offsetH : offsetH),
-    sourceY: sy,
-    // offset to the left or right depending on the target position
-    targetX: tx + (targetPos === "left" ? -offsetH : offsetH),
-    targetY: ty,
-    sourcePosition: sourcePos,
-    targetPosition: targetPos,
-    offset: borderRadius,
-    borderRadius: borderRadius,
-  });
-  return { edgePath, labelX, labelY, sx, sy, tx, ty, sourcePos, targetPos };
 }
 
 export default TableEdge;

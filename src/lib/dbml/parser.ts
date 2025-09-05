@@ -1,3 +1,4 @@
+import { TableEdgeTypeName } from "@/components/edges/table-edge";
 import {
   FIELD_BORDER,
   FIELD_HEIGHT_TOTAL,
@@ -5,7 +6,6 @@ import {
   HEADER_HEIGHT,
   PRIMARY_KEY_WIDTH,
 } from "@/components/table-constants";
-import { TableEdgeTypeName } from "@/components/edges/table-edge";
 import {
   ERRelationTypes,
   GroupNodeType,
@@ -21,7 +21,6 @@ import Field from "@dbml/core/types/model_structure/field";
 import Ref from "@dbml/core/types/model_structure/ref";
 import Table from "@dbml/core/types/model_structure/table";
 import TableGroup from "@dbml/core/types/model_structure/tableGroup";
-import { get } from "http";
 
 //#region DBML to Nodes and Edges
 export type RefDic = { [k: string]: Ref[] };
@@ -62,11 +61,11 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
   const childNodes = g.tables
     .map(getTableId)
     .map((id) => nodes.get(id)!);
-  const initialWidth =
-    childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
-    (childNodes.length - 1) * paddingX;
-  const initialHeight =
-    childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
+  // const initialWidth =
+  //   childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
+  //   (childNodes.length - 1) * paddingX;
+  // const initialHeight =
+  //   childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
 
   return <GroupNodeType>{
     id: getGroupId(g),
@@ -76,9 +75,10 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
       label: g.name,
       nodeIds: g.tables.map(getTableId),
       color: g.color,
+      folded: false,
     },
-    initialWidth,
-    initialHeight,
+    // initialWidth,
+    // initialHeight,
   };
 }
 
@@ -93,8 +93,9 @@ export function mapTableToNode(table: Table) {
     data: {
       table,
       label: table.name,
-      parentId: table.group ? getGroupId(table.group) : undefined,
+      groupId: table.group ? getGroupId(table.group) : undefined,
       color: table.headerColor,
+      folded: true,
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,

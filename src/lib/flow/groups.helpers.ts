@@ -60,8 +60,8 @@ export function computeRelatedGroupChanges(
         });
       });
 
-    } else if (oldNode.type === NodeTypes.Table && oldNode.data.parentId) {
-      const groupParent = oldNodesById.get(oldNode.data.parentId) as
+    } else if (oldNode.type === NodeTypes.Table && oldNode.data.groupId) {
+      const groupParent = oldNodesById.get(oldNode.data.groupId) as
         | GroupNodeType
         | undefined;
       if (!groupParent) continue;

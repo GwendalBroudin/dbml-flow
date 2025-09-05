@@ -1,16 +1,18 @@
 import Ref from "@dbml/core/types/model_structure/ref";
 import type Table from "@dbml/core/types/model_structure/table";
-import { Edge, type Node } from "@xyflow/react";
+import TableGroup from "@dbml/core/types/model_structure/tableGroup";
+import { Edge, InternalNode, type Node } from "@xyflow/react";
 
 export type SharedNodeData = {
   label: string;
   color?: string;
+  folded: boolean;
 };
 
 export type TableNodeData = SharedNodeData & {
   table: Table;
   index?: number;
-  parentId?: string; // group id
+  groupId?: string; // group id
 };
 
 export const NodeTypes = {
@@ -21,12 +23,13 @@ export const NodeTypes = {
 export type NodeTypes = typeof NodeTypes[keyof typeof NodeTypes]; 
 
 export type TableNodeType = Node<TableNodeData, 'Table'>;
+export type InternalTableNode = InternalNode & { data: TableNodeData };
 
 export type GroupNodeData = SharedNodeData & {
   nodeIds: string[];
 };
 export type GroupNodeType = Node<GroupNodeData, 'TableGroup'>;
-
+export type InternalGroupNode = InternalNode & { data: GroupNodeData };
 
 export type NodeType = TableNodeType | GroupNodeType;
 
