@@ -5,7 +5,7 @@ import {
   HEADER_HEIGHT,
   PRIMARY_KEY_WIDTH,
 } from "@/components/table-constants";
-import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
+import { TableEdgeTypeName } from "@/components/edges/table-edge";
 import {
   ERRelationTypes,
   GroupNodeType,
@@ -117,7 +117,7 @@ export function mapToEdge(ref: Ref) {
     id: ref.id.toString(),
     source: getTableId(sourceEndPoint.fields[0].table),
     target: getTableId(targetEndPoint.fields[0].table),
-    type: HorizontalFloatingEdgeTypeName,
+    type: TableEdgeTypeName,
     sourceHandle: sourcefieldId,
     targetHandle: targetfieldId,
     markerStart: sourceRelationType,

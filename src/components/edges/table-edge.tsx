@@ -7,24 +7,23 @@ import {
   useInternalNode,
 } from "@xyflow/react";
 
-import { getHandleCoords } from "@/lib/math/math.helper";
-import useStore from "@/state/store";
-import { getSmoothStepPath } from "@xyflow/react";
-import { useMemo } from "react";
-import { ERMakerLabels, markerWidth } from "./markers";
 import {
   distributeMarkers,
   EdgesRelativeData,
   getMarkerType,
 } from "@/lib/flow/edges.helpers";
-import { get } from "http";
+import { getHandleCoords } from "@/lib/math/math.helper";
+import useStore from "@/state/store";
 import { TableEdgeData } from "@/types/nodes.types";
+import { getSmoothStepPath } from "@xyflow/react";
+import { useMemo } from "react";
+import { ERMakerLabels, markerWidth } from "./markers";
 
-export const HorizontalFloatingEdgeTypeName = "horizontal-floating";
+export const TableEdgeTypeName = "table-edge";
 
 const borderRadius = 5;
 
-function HorizontalFloatingEdge({
+function TableEdge({
   id,
   source,
   target,
@@ -246,4 +245,4 @@ export function getEdgePath(
   return { edgePath, labelX, labelY, sx, sy, tx, ty, sourcePos, targetPos };
 }
 
-export default HorizontalFloatingEdge;
+export default TableEdge;

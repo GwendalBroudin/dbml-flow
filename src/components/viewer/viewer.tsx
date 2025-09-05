@@ -19,9 +19,9 @@ import "@xyflow/react/dist/style.css";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
 import DevTools from "../devTools/dev-tools";
-import HorizontalFloatingEdge, {
-  HorizontalFloatingEdgeTypeName,
-} from "../edges/horizontal-floating-edge";
+import TableEdge, {
+  TableEdgeTypeName,
+} from "../edges/table-edge";
 import ERMarkers from "../edges/markers";
 import { getNodeClass, getNodeColor } from "./viewer.helper";
 import { TableGroupNode } from "../table-group-node";
@@ -45,7 +45,7 @@ const nodeTypes = {
 };
 
 const edgeTypes = {
-  [HorizontalFloatingEdgeTypeName]: HorizontalFloatingEdge,
+  [TableEdgeTypeName]: TableEdge,
 };
 
 export type FlowProps = {} & React.ComponentProps<typeof ReactFlow>;
