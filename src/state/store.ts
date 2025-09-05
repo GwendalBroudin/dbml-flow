@@ -125,7 +125,7 @@ const useStore = create<AppState>((set, get) => ({
   savedPositions: {},
   minimap: false,
   savePositionsInCode: true,
-  saveCodeInUrl: false,
+  saveCodeInUrl: true,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 

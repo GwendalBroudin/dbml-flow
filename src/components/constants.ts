@@ -1,3 +1,5 @@
+// !! Those constants are used in table-node.tsx, and are dependend with specific class values, be careful when modifying them !!
+
 export const HEADER_HEIGHT = 40 as const;
 export const FIELD_HEIGHT = 24 as const;
 export const FIELD_BORDER = 1 as const;
