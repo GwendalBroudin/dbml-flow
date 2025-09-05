@@ -245,7 +245,7 @@ const useStore = create<AppState>((set, get) => ({
         return { ...n, data: { ...n.data, folded: fold } };
       }
       return n;
-    }) as NodeType[];
+    }) as NodeType[];      
 
     const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
 

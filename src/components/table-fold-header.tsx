@@ -14,7 +14,6 @@ export const TableFoldHeader = forwardRef<
     headerColor?: string;
     label: string;
     id: string;
-    color?: string;
     folded?: boolean;
     headerClassName?: string;
     data: TableNodeData | GroupNodeData;
@@ -28,7 +27,6 @@ export const TableFoldHeader = forwardRef<
       headerColor,
       folded,
       label,
-      color,
       headerClassName,
       data,
       ...props
@@ -61,7 +59,7 @@ export const TableFoldHeader = forwardRef<
       >
         <HiddenHandle id={id} type="target" position={Position.Left} />
         <BaseNodeHeader
-          headerColor={color}
+          headerColor={headerColor}
           label={label}
           selected={selected}
           className={cn(

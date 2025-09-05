@@ -1,9 +1,9 @@
 import { getFieldId } from "@/lib/dbml/node-dmbl.parser";
 import { cn } from "@/lib/utils";
-import { type TableNodeType } from "@/types/nodes.types";
+import { InternalGroupNode, type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
-import { type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps, Position, useInternalNode } from "@xyflow/react";
 import { KeyRound } from "lucide-react";
 import { BaseNode } from "./base-node";
 import { LabeledHandle } from "./labeled-handle";
@@ -72,8 +72,18 @@ function TableField(field: Field, table: Table) {
 }
 
 export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
+  const groupNode = data.groupId
+    ? (useInternalNode(data.groupId) as InternalGroupNode)
+    : null;
+  const hidden = groupNode?.data.folded ?? false;
+
   return (
-    <BaseNode id={id} className="p-0 flex flex-col" selected={selected}>
+    <BaseNode
+      id={id}
+      className="p-0 flex flex-col"
+      selected={selected}
+      hidden={hidden}
+    >
       <TableFoldHeader
         id={id}
         data={data}

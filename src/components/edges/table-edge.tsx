@@ -33,12 +33,6 @@ function TableEdge({
 }: EdgeProps) {
   const sourceTableNode = useInternalNode(source) as InternalTableNode;
   const targetTableNode = useInternalNode(target) as InternalTableNode;
-  const sourceGroupNode = useInternalNode(
-    sourceTableNode?.data.groupId || ""
-  ) as InternalGroupNode;
-  const targetGroupNode = useInternalNode(
-    targetTableNode?.data.groupId || ""
-  ) as InternalGroupNode;
 
   const { edgesRelativeData } = useStore();
 
