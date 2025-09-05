@@ -35,13 +35,13 @@ export const BaseNodeHeader = forwardRef<
     className={cn("rounded-tl-sm rounded-tr-sm bg-secondary", className)}
     style={{
       backgroundColor: headerColor,
-      opacity: selected ? 0.7 : 0.5,
+      opacity: selected ? 1 : 0.8,
       height: HEADER_HEIGHT,
     }}
     {...props}
   >
-    <div className="p-2">
-      <h2 className="font-bold text-muted-foreground mix-blend-difference ">
+    <div className="p-1 pl-2">
+      <h2 className="font-semibold text-[15px] mix-blend-luminosity filter-invert">
         {label}
       </h2>
     </div>

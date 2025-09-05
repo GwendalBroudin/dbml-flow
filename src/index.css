@@ -219,4 +219,8 @@ body {
   top: 5px;
 }
 
+.filter-invert {
+  filter: invert(1);
+}
+
 /* #endregion */

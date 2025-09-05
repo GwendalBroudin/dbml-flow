@@ -26,7 +26,7 @@ export const TableGroupNode = ({
       <div
         className="flex-auto overflow-visible"
 
-        style={{ backgroundColor: data.color, opacity: selected ? 0.3 : 0.1 }}
+        style={{ backgroundColor: data.color, opacity: selected ? 0.4 : 0.25 }}
       ></div>
     </BaseNode>
   );
