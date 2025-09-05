@@ -1,6 +1,5 @@
 import Ref from "@dbml/core/types/model_structure/ref";
 import type Table from "@dbml/core/types/model_structure/table";
-import TableGroup from "@dbml/core/types/model_structure/tableGroup";
 import { Edge, InternalNode, type Node } from "@xyflow/react";
 
 export type SharedNodeData = {
@@ -19,6 +18,8 @@ export const NodeTypes = {
   TableGroup: 'TableGroup',
   Table: 'Table',
 } as const;
+
+export const TableEdgeTypeName = "table-edge";
 
 export type NodeTypes = typeof NodeTypes[keyof typeof NodeTypes]; 
 

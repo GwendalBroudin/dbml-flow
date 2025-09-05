@@ -1,4 +1,3 @@
-import { TableEdgeTypeName } from "@/components/edges/table-edge";
 import {
   FIELD_BORDER,
   FIELD_HEIGHT_TOTAL,
@@ -7,39 +6,23 @@ import {
   PRIMARY_KEY_WIDTH,
 } from "@/components/table-constants";
 import {
-  ERRelationTypes,
   GroupNodeType,
   NodePositionIndex,
   NodeTypes,
-  TableEdgeType,
   TableNodeType,
 } from "@/types/nodes.types";
 import { Parser } from "@dbml/core";
 import Database from "@dbml/core/types/model_structure/database";
-import Endpoint from "@dbml/core/types/model_structure/endpoint";
 import Field from "@dbml/core/types/model_structure/field";
-import Ref from "@dbml/core/types/model_structure/ref";
 import Table from "@dbml/core/types/model_structure/table";
 import TableGroup from "@dbml/core/types/model_structure/tableGroup";
 
-//#region DBML to Nodes and Edges
-export type RefDic = { [k: string]: Ref[] };
+//#region DBML to Nodes
 
 export const parser = new Parser();
 
-export function getNodeAndEdgesFromDbml(dbml: string) {
-  try {
-    const database = parser.parse(dbml, "dbmlv2");
-    console.log("database", database);
-
-    return parseDatabaseToGraph(database);
-  } catch (e) {
-    return { error: e };
-  }
-}
 export function parseDatabaseToGraph(database: Database) {
   const tables = database.schemas.flatMap((s) => s.tables);
-  const refs = database.schemas.flatMap((s) => s.refs);
   const groups = database.schemas.flatMap((s) => s.tableGroups);
 
   const tableNodes = tables.map((t) => mapTableToNode(t));
@@ -49,7 +32,6 @@ export function parseDatabaseToGraph(database: Database) {
 
   return {
     tableNodes,
-    edges: refs.map((r) => mapToEdge(r)),
     groupNodes,
   };
 }
@@ -58,9 +40,7 @@ export const paddingX = 20;
 export const paddingY = 20;
 
 function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
-  const childNodes = g.tables
-    .map(getTableId)
-    .map((id) => nodes.get(id)!);
+  const childNodes = g.tables.map(getTableId).map((id) => nodes.get(id!)!);
   // const initialWidth =
   //   childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
   //   (childNodes.length - 1) * paddingX;
@@ -103,78 +83,26 @@ export function mapTableToNode(table: Table) {
   };
 }
 
-export function mapToEdge(ref: Ref) {
-  const sourceEndPoint = ref.endpoints[0];
-  const targetEndPoint = ref.endpoints[1];
-
-  const sourceField = sourceEndPoint.fields[0];
-  const sourcefieldId = getFieldId(sourceField);
-  const targetField = targetEndPoint.fields[0];
-  const targetfieldId = getFieldId(targetField);
-
-  const sourceRelationType = getRelationType(sourceEndPoint, targetField);
-  const targetRelationType = getRelationType(targetEndPoint, sourceField);
-  return <TableEdgeType>{
-    id: ref.id.toString(),
-    source: getTableId(sourceEndPoint.fields[0].table),
-    target: getTableId(targetEndPoint.fields[0].table),
-    type: TableEdgeTypeName,
-    sourceHandle: sourcefieldId,
-    targetHandle: targetfieldId,
-    markerStart: sourceRelationType,
-    markerEnd: targetRelationType,
-    data: {
-      sourcefieldId,
-      targetfieldId,
-      ref,
-      sourceRelationType,
-      targetRelationType,
-    },
-  };
-}
 // #endregion
 
 //#region helpers
-export function getRelationType(
-  endPoint: Endpoint,
-  targetfield: Field
-): ERRelationTypes {
-  if (endPoint.relation === "1" && isNotNull(targetfield)) {
-    return "one";
-  } else if (endPoint.relation === "1") {
-    return "oneOptionnal";
-  } else if (endPoint.relation === "*") {
-    return "many";
-  }
-
-  throw new Error("Unknown relation type");
-}
 
 export function getTableId(table: Table) {
-  return `t-${getBaseId(table)}`;
+  return table ? `t-${getBaseId(table)}` : undefined;
 }
 
 export function getGroupId(group: TableGroup) {
-  return `g-${getBaseId(group)}`;
+  return group ? `g-${getBaseId(group)}` : undefined;
 }
 
 export function getFieldId(e: Field) {
-  return `f-${getBaseId(e.table)}.${e.name}`;
+  return e ? `f-${getBaseId(e.table)}.${e.name}` : undefined;
 }
 
 function getBaseId(table: Table | TableGroup) {
   return `${table.schema.name}.${table.name}`;
 }
 
-export function isNotNull(field: Field): boolean {
-  const table = field.table;
-  return (
-    field.not_null ||
-    field.pk ||
-    (table.indexes?.find((i) => i.columns.some((c) => c.value === field.name))
-      ?.pk as unknown as boolean)
-  );
-}
 // #endregion
 
 // #region size guesser

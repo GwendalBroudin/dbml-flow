@@ -4,31 +4,9 @@ import {
   getMarkerType,
 } from "@/lib/flow/edges.helpers";
 import { getHandleCoords } from "@/lib/math/math.helper";
-import { InternalGroupNode, InternalTableNode } from "@/types/nodes.types";
 import { getSmoothStepPath, InternalNode } from "@xyflow/react";
-import { ERMarkerTypes, markerWidth } from "./markers";
+import { markerWidth } from "./markers";
 import { borderRadius } from "./table-edge";
-
-export function getTableHandleData(
-  tableNode: InternalTableNode,
-  groupNode: InternalGroupNode | undefined,
-  fieldId: string,
-  marker: string
-) {
-  let handleId = fieldId;
-  let folded = false;
-  if (groupNode?.data.folded) {
-    folded = true;
-    marker = ERMarkerTypes.none;
-    handleId = groupNode.id;
-  }
-  else if (tableNode?.data.folded){
-    folded = true;
-    marker = ERMarkerTypes.none;
-    handleId = tableNode.id;
-  } 
-  return { handleId, marker, folded };
-}
 
 export function getEdgePath(
   edgesRelativeData: EdgesRelativeData,

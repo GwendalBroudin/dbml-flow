@@ -18,38 +18,35 @@ import {
 import { create } from "zustand";
 
 import { StartupCode } from "@/components/editor/editor.constant";
+import { mapDatabaseToEdges } from "@/lib/dbml/edge-dbml.parser";
 import {
   extractPositions,
   parseDatabaseToGraph,
   parser,
   setPositionsInCode,
-} from "@/lib/dbml/parser";
+} from "@/lib/dbml/node-dmbl.parser";
+import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 import {
   computeEdgesRelativeData,
   EdgesRelativeData,
 } from "@/lib/flow/edges.helpers";
-import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
-import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
-import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
-import {
-  GroupNodeType,
-  NodePositionIndex,
-  NodeType,
-  NodeTypes,
-  SharedNodeData,
-  TableNodeType,
-} from "@/types/nodes.types";
-import Database from "@dbml/core/types/model_structure/database";
-import { debounce } from "lodash-es";
-import { editor } from "monaco-editor";
-import { getNodesBounds } from "@/lib/math/math.helper";
 import {
   computeRelatedGroupChanges,
   getBoundedGroups,
 } from "@/lib/flow/groups.helpers";
+import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
+import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
+import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { toMapId } from "@/lib/utils";
+import {
+  NodePositionIndex,
+  NodeType,
+  NodeTypes
+} from "@/types/nodes.types";
+import Database from "@dbml/core/types/model_structure/database";
 import { CompilerError } from "@dbml/core/types/parse/error";
-import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
+import { debounce } from "lodash-es";
+import { editor } from "monaco-editor";
 
 // Helper type for parse results
 type ParseResult =
@@ -187,8 +184,8 @@ const useStore = create<AppState>((set, get) => ({
     );
 
     // Get initial layout
-    let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
-
+    let { tableNodes, groupNodes } = parseDatabaseToGraph(database);
+    const edges = mapDatabaseToEdges(database, get().foldedIds);
     const savedPositions = initialSavedPositions;
 
     if (
@@ -250,7 +247,9 @@ const useStore = create<AppState>((set, get) => ({
       return n;
     }) as NodeType[];
 
-    set({ foldedIds: newFoldedIds, nodes: newNodes });
+    const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
+
+    set({ foldedIds: newFoldedIds, nodes: newNodes, edges });
   },
 
   onNodesChange: (changes: NodeChange<NodeType>[]) => {

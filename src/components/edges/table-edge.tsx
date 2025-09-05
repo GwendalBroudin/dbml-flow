@@ -14,9 +14,7 @@ import {
 } from "@/types/nodes.types";
 import { useMemo } from "react";
 import { ERMakerLabels } from "./markers";
-import { getEdgePath, getTableHandleData } from "./table-edge.helpers";
-
-export const TableEdgeTypeName = "table-edge";
+import { getEdgePath } from "./table-edge.helpers";
 
 export const borderRadius = 5;
 
@@ -43,26 +41,6 @@ function TableEdge({
   ) as InternalGroupNode;
 
   const { edgesRelativeData } = useStore();
-  const {
-    handleId: calcSourceHandleId,
-    marker: calcMarkerStart,
-    folded: sourceFolded,
-  } = getTableHandleData(
-    sourceTableNode,
-    sourceGroupNode,
-    sourceHandleId || "",
-    markerStart || ""
-  );
-  const {
-    handleId: calcTargetHandleId,
-    marker: calcMarkerEnd,
-    folded: targetFolded,
-  } = getTableHandleData(
-    targetTableNode,
-    targetGroupNode,
-    targetHandleId || "",
-    markerEnd || ""
-  );
 
   const { edgePath, labelX, labelY, sx, sy, tx, ty, sourcePos, targetPos } =
     useMemo(
@@ -70,10 +48,10 @@ function TableEdge({
         getEdgePath(
           edgesRelativeData,
           id,
-          calcSourceHandleId || "",
-          calcTargetHandleId || "",
-          calcMarkerStart || "",
-          calcMarkerEnd || "",
+          sourceHandleId || "",
+          targetHandleId || "",
+          markerStart || "",
+          markerEnd || "",
           sourceTableNode,
           targetTableNode
         ),
@@ -90,15 +68,15 @@ function TableEdge({
       id={id}
       strokeWidth={5}
       style={style}
-      markerStart={calcMarkerStart}
-      markerEnd={calcMarkerEnd}
+      markerStart={markerStart}
+      markerEnd={markerEnd}
       //cause error React does not recognize the `pathOptions` prop etc...
       // {...props}
     >
       <EdgeLabels
         displayed={!!animated}
-        displaySource={!sourceFolded}
-        displayTarget={!targetFolded}
+        displaySource={true}
+        displayTarget={true}
         data={data}
         labelX={labelX}
         labelY={labelY}

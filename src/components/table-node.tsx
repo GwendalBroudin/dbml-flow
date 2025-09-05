@@ -1,4 +1,4 @@
-import { getFieldId } from "@/lib/dbml/parser";
+import { getFieldId } from "@/lib/dbml/node-dmbl.parser";
 import { cn } from "@/lib/utils";
 import { type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
@@ -76,6 +76,7 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
     <BaseNode id={id} className="p-0 flex flex-col" selected={selected}>
       <TableFoldHeader
         id={id}
+        data={data}
         selected={selected}
         headerColor={data.color}
         label={data.label}
@@ -84,13 +85,18 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
       />
 
       {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
-      {!data.folded && (
-        <table className="border-spacing-10 overflow-visible">
-          <TableBody>
-            {data.table.fields.map((field) => TableField(field, data.table))}
-          </TableBody>
-        </table>
-      )}
+
+      <table
+        className={cn(
+          "border-spacing-10 overflow-visible",
+          data.folded ? "hidden" : "" // avoid this warning
+          // Couldn't create edge for source handle id: "f-ecommerce.product_tags.id", edge id: 7. Help: https://reactflow.dev/error#008
+        )}
+      >
+        <TableBody>
+          {data.table.fields.map((field) => TableField(field, data.table))}
+        </TableBody>
+      </table>
     </BaseNode>
   );
 };

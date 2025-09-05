@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
+import useStore from "@/state/store";
+import { GroupNodeData, TableNodeData } from "@/types/nodes.types";
+import { Position, useUpdateNodeInternals } from "@xyflow/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { forwardRef, HTMLAttributes, useCallback } from "react";
 import { BaseNodeHeader } from "./base-node";
 import { HiddenHandle } from "./hidden-handle";
-import useStore from "@/state/store";
-import { Position } from "@xyflow/react";
 
 export const TableFoldHeader = forwardRef<
   HTMLDivElement,
@@ -16,6 +17,7 @@ export const TableFoldHeader = forwardRef<
     color?: string;
     folded?: boolean;
     headerClassName?: string;
+    data: TableNodeData | GroupNodeData;
   }
 >(
   (
@@ -28,13 +30,16 @@ export const TableFoldHeader = forwardRef<
       label,
       color,
       headerClassName,
+      data,
       ...props
     },
     ref
   ) => {
     const { foldNode } = useStore();
+    const updateNodeInternals = useUpdateNodeInternals();
     const callback = useCallback(() => {
       foldNode(id, !folded);
+      updateNodeInternals(id);
     }, [foldNode, id, folded]);
 
     const buttonProp = {
