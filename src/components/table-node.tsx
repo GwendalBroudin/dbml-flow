@@ -1,13 +1,14 @@
 import { getFieldId } from "@/lib/dbml/parser";
 import { type TableNodeType } from "@/types/nodes.types";
 import { type NodeProps, Position } from "@xyflow/react";
-import { BaseNode } from "./base-node";
+import { BaseNode, BaseNodeHeader } from "./base-node";
 import { LabeledHandle } from "./labeled-handle";
 import { TableBody, TableCell, TableRow } from "./ui/table";
 import Field from "@dbml/core/types/model_structure/field";
 import { KeyRound } from "lucide-react";
 import Table from "@dbml/core/types/model_structure/table";
 import { cn } from "@/lib/utils";
+import { FIELD_HEIGHT } from "./constants";
 
 function TableField(field: Field, table: Table) {
   const indexes = table.indexes.filter((i) =>
@@ -19,7 +20,14 @@ function TableField(field: Field, table: Table) {
   const attribute = pk ? <KeyRound size="0.7rem" /> : null;
 
   return (
-    <TableRow key={field.name} className="relative text-sm">
+    <TableRow
+      key={field.name}
+      className="relative text-sm"
+      style={{
+        height: FIELD_HEIGHT - 1, // minus border bottom
+        overflow: "hidden",
+      }}
+    >
       <TableCell
         className={cn(
           "pl-0 pr-6 flex items-center",
@@ -51,17 +59,18 @@ function TableField(field: Field, table: Table) {
   );
 }
 
-export const TableNode = ({ selected, data }: NodeProps<TableNodeType>) => {
+export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
   return (
-    <BaseNode className="p-0 flex flex-col" selected={selected}>
-      <div
-        className="rounded-tl-md rounded-tr-md p-2 bg-secondary"
-        style={{ backgroundColor: data.table.headerColor }}
-      >
-        <h2 className="font-bold text-muted-foreground mix-blend-difference">
-          {data.label}
-        </h2>
-      </div>
+    <BaseNode
+      id={`table-${id}`}
+      className="p-0 flex flex-col"
+      selected={selected}
+    >
+      <BaseNodeHeader
+        headerColor={data.color}
+        label={data.label}
+        selected={selected}
+      />
 
       {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
       <table className="border-spacing-10 overflow-visible">

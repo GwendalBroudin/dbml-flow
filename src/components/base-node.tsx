@@ -1,6 +1,7 @@
 import { forwardRef, HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
+import { HEADER_HEIGHT } from "./constants";
 
 export const BaseNode = forwardRef<
   HTMLDivElement,
@@ -12,7 +13,7 @@ export const BaseNode = forwardRef<
       "relative rounded-md border bg-card p-5 text-card-foreground",
       className,
       selected ? "border-muted-foreground shadow-lg" : "",
-      "hover:ring-1",
+      "hover:ring-1"
     )}
     tabIndex={0}
     {...props}
@@ -20,3 +21,31 @@ export const BaseNode = forwardRef<
 ));
 
 BaseNode.displayName = "BaseNode";
+
+export const BaseNodeHeader = forwardRef<
+  HTMLDivElement,
+  HTMLAttributes<HTMLDivElement> & {
+    selected?: boolean;
+    headerColor?: string;
+    label: string;
+  }
+>(({ className, selected, headerColor, label, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("rounded-tl-md rounded-tr-md bg-secondary", className)}
+    style={{
+      backgroundColor: headerColor,
+      opacity: selected ? 0.7 : 0.5,
+      height: HEADER_HEIGHT,
+    }}
+    {...props}
+  >
+    <div className="p-2">
+      <h2 className="font-bold text-muted-foreground mix-blend-difference ">
+        {label}
+      </h2>
+    </div>
+  </div>
+));
+
+BaseNodeHeader.displayName = "BaseNodeHeader";

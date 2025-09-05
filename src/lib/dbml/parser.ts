@@ -1,8 +1,10 @@
+import { FIELD_HEIGHT, HEADER_HEIGHT } from "@/components/constants";
 import { HorizontalFloatingEdgeTypeName } from "@/components/edges/horizontal-floating-edge";
 import {
   ERRelationTypes,
   GroupNodeType,
   NodePositionIndex,
+  NodeTypes,
   TableEdgeType,
   TableNodeType,
 } from "@/types/nodes.types";
@@ -61,11 +63,12 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
 
   return <GroupNodeType>{
     id: getTableOrGroupId(g),
-    type: "group",
-    zIndex: 5,
+    type: NodeTypes.TableGroup,
+    zIndex: -1001,
     data: {
       label: g.name,
       nodeIds: g.tables.map(getTableOrGroupId),
+      color: g.color,
     },
     initialWidth,
     initialHeight,
@@ -78,12 +81,13 @@ export function mapTableToNode(table: Table) {
   const guessed = guessSize(table);
   return <TableNodeType>{
     id: tableId,
-    type: "table",
+    type: NodeTypes.Table,
     zIndex: 10,
     data: {
       table,
       label: table.name,
       parentId: table.group ? getTableOrGroupId(table.group) : undefined,
+      color: table.headerColor,
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,
@@ -158,8 +162,6 @@ export function isNotNull(field: Field): boolean {
 // #region size guesser
 
 // Guess size function for nodes
-const headerHeight = 40;
-const fieldHeight = 30;
 
 const fontSize = 11; // should be 14 but gets better approximations
 
@@ -173,7 +175,7 @@ export function guessSize(table: Table) {
     }, "");
   return {
     width: longestField.length * fontSize + inlinePadding * 2,
-    height: table.fields.length * fieldHeight + headerHeight,
+    height: table.fields.length * FIELD_HEIGHT + HEADER_HEIGHT,
   };
 }
 // #endregion

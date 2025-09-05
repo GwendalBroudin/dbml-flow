@@ -96,7 +96,7 @@ export type AppState = {
   onLayout: (direction: string, fitView: FitView) => void;
 };
 
-const debounceTime = 300;
+const debounceTime = 600;
 const setCodeInUrlDebounced = debounce(setCodeInUrl, debounceTime);
 const setPositionsInCodeDebounced = debounce(
   (

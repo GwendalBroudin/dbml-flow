@@ -32,7 +32,7 @@ export const StartupCode = `
 
 // Creating tables
 // You can define the tables with full schema names
-Table ecommerce.merchants {
+Table ecommerce.merchants [headercolor: #1E90FF] {
   id int
   country_code int
   merchant_name varchar
@@ -45,14 +45,14 @@ Table ecommerce.merchants {
 }
 
 // If schema name is omitted, it will default to "public" schema.
-Table users as U {
+Table users as U [headercolor: #32CD32] {
   id int [pk, increment] // auto-increment
   full_name varchar
   created_at timestamp
   country_code int
 }
 
-Table countries {
+Table countries [headercolor: #FFD700] {
   code int [pk]
   name varchar
   continent_name varchar
@@ -69,7 +69,7 @@ Ref: ecommerce.merchants.country_code > countries.code
 //// -- LEVEL 2
 //// -- Adding column settings
 
-Table ecommerce.order_items {
+Table ecommerce.order_items [headercolor: #FF69B4] {
   order_id int [ref: > ecommerce.orders.id] // inline relationship (many-to-one)
   product_id int
   quantity int [default: 1] // default value
@@ -80,7 +80,7 @@ Table ecommerce.order_items {
 
 Ref: ecommerce.order_items.product_id > ecommerce.products.id
 
-Table ecommerce.orders {
+Table ecommerce.orders [headercolor: #FFA500] {
   id int [pk] // primary key
   user_id int [not null, unique]
   status varchar
@@ -100,7 +100,7 @@ Enum ecommerce.products_status {
 }
 
 // Indexes: You can define a single or multi-column index 
-Table ecommerce.products {
+Table ecommerce.products [headercolor: #8A2BE2] {
   id int [pk]
   name varchar
   merchant_id int [not null]
@@ -114,12 +114,12 @@ Table ecommerce.products {
   }
 }
 
-Table ecommerce.product_tags {
+Table ecommerce.product_tags [headercolor: #DC143C] {
   id int [pk]
   name varchar
 }
 
-Table ecommerce.merchant_periods {
+Table ecommerce.merchant_periods [headercolor: #20B2AA] {
   id int [pk]
   merchant_id int
   country_code int
@@ -133,7 +133,7 @@ Ref: ecommerce.product_tags.id <> ecommerce.products.id // many-to-many
 Ref: ecommerce.merchant_periods.(merchant_id, country_code) > ecommerce.merchants.(id, country_code)
 Ref user_orders: ecommerce.orders.user_id > public.users.id
 
-TableGroup ecommerce {
+TableGroup ecommerce [color: #20B2AA] {
   ecommerce.merchants
   ecommerce.merchant_periods
   ecommerce.products

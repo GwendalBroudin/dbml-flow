@@ -1,7 +1,8 @@
-import { GroupNodeType, NodeType } from "@/types/nodes.types";
+import { GroupNodeType, NodeType, NodeTypes } from "@/types/nodes.types";
 import { getNodesBounds, NodeBounds } from "../math/math.helper";
 import { NodeChange, NodePositionChange } from "@xyflow/react";
 import { vectorAdd, vectorSub } from "../math/vector.helper";
+import { GROUP_PADDING, HEADER_HEIGHT } from "@/components/constants";
 
 /**
  * Calculate and update group nodes parameters (width, height, position) based on their children nodes bounds.
@@ -14,7 +15,7 @@ import { vectorAdd, vectorSub } from "../math/vector.helper";
 export function getBoundedGroups(
   groupNodes: GroupNodeType[],
   childrenNodesById: Map<string, NodeType>,
-  groupPadding = 20
+  groupPadding = GROUP_PADDING
 ) {
   return groupNodes.map((groupNode) => {
     const children = groupNode.data.nodeIds
@@ -33,7 +34,7 @@ export function getBoundedGroups(
 export function computeRelatedGroupChanges(
   changes: NodeChange<NodeType>[],
   oldNodesById: Map<string, NodeType>,
-  groupPadding = 20
+  groupPadding = GROUP_PADDING
 ) {
   const computedChanges = [] as NodeChange<NodeType>[];
   for (const change of changes) {
@@ -42,7 +43,7 @@ export function computeRelatedGroupChanges(
     const oldNode = oldNodesById.get(change.id);
     if (!oldNode) continue;
 
-    if (oldNode.type === "group") {
+    if (oldNode.type === NodeTypes.TableGroup) {
       if (oldNode.data.nodeIds.length === 0) continue; // no children, no need to update anything
 
       const drag = vectorSub(change.position!, oldNode.position);
@@ -59,8 +60,7 @@ export function computeRelatedGroupChanges(
         });
       });
 
-    } else if (oldNode.type === "table" && oldNode.data.parentId) {
-      const drag = vectorSub(change.position!, oldNode.position);
+    } else if (oldNode.type === NodeTypes.Table && oldNode.data.parentId) {
       const groupParent = oldNodesById.get(oldNode.data.parentId) as
         | GroupNodeType
         | undefined;
@@ -106,10 +106,10 @@ export function getGroupDimensionsAndPosition(
 ) {
   return {
     width: bounds.width + padding * 2,
-    height: bounds.height + padding * 2,
+    height: bounds.height + padding * 2 + HEADER_HEIGHT,
     position: {
       x: bounds.xMin - padding,
-      y: bounds.yMin - padding,
+      y: bounds.yMin - padding - HEADER_HEIGHT,
     },
   };
 }

@@ -23,7 +23,9 @@ import HorizontalFloatingEdge, {
   HorizontalFloatingEdgeTypeName,
 } from "../edges/horizontal-floating-edge";
 import ERMarkers from "../edges/markers";
-import { getNodeColor } from "./viewer.helper";
+import { getNodeClass, getNodeColor } from "./viewer.helper";
+import { TableGroupNode } from "../table-group-node";
+import { NodeTypes } from "@/types/nodes.types";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -38,8 +40,8 @@ const selector = (state: AppState) => ({
 });
 
 const nodeTypes = {
-  table: TableNode,
-  // group: BaseNode,
+  [NodeTypes.Table]: TableNode,
+  [NodeTypes.TableGroup]: TableGroupNode,
 };
 
 const edgeTypes = {
@@ -77,7 +79,7 @@ function ERViewer({ className, ...props }: FlowProps) {
     }
   }, [initialized, firstRender, setfirstRender]);
 
-  const map = minimap ? <MiniMap nodeColor={getNodeColor} /> : null;
+  const map = minimap ? <MiniMap nodeColor={getNodeColor} nodeClassName={getNodeClass} /> : null;
 
   return (
     <ReactFlow
