@@ -9,7 +9,6 @@ import {
   FitView,
   Node,
   NodeChange,
-  NodeDimensionChange,
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
@@ -38,11 +37,7 @@ import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { toMapId } from "@/lib/utils";
-import {
-  NodePositionIndex,
-  NodeType,
-  NodeTypes
-} from "@/types/nodes.types";
+import { NodePositionIndex, NodeType, NodeTypes } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import { CompilerError } from "@dbml/core/types/parse/error";
 import { debounce } from "lodash-es";
@@ -240,12 +235,22 @@ const useStore = create<AppState>((set, get) => ({
     if (fold) newFoldedIds.add(nodeId);
     else newFoldedIds.delete(nodeId);
 
-    const newNodes = nodes.map((n) => {
-      if (n.id === nodeId && "data" in n) {
-        return { ...n, data: { ...n.data, folded: fold } };
-      }
-      return n;
-    }) as NodeType[];      
+    const newNodes = applyNodeChanges<NodeType>(
+      [
+        {
+          id: nodeId,
+          type: "replace" as const,
+          item: {
+            ...node,
+            data: {
+              ...node.data,
+              folded: fold,
+            },
+          },
+        },
+      ],
+      nodes
+    );
 
     const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
 
@@ -259,22 +264,6 @@ const useStore = create<AppState>((set, get) => ({
     const computedChanges = computeRelatedGroupChanges(changes, oldNodesById);
 
     let newNodes = applyNodeChanges([...changes, ...computedChanges], nodes);
-
-    // Fix: dimension changes seems to not work with applyNodeChanges
-    // so we apply them manually here
-    if (computedChanges.some((c) => c.type === "dimensions")) {
-      newNodes = newNodes.map((n) => {
-        const change = computedChanges.find(
-          (c) => c.type === "dimensions" && c.id === n.id
-        ) as NodeDimensionChange;
-        if (!change) return n;
-        return {
-          ...n,
-          width: change.dimensions!.width,
-          height: change.dimensions!.height,
-        };
-      });
-    }
 
     const edgesRelativeData = computeEdgesRelativeData(
       toMapId<string, NodeType>(newNodes),

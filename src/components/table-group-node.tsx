@@ -1,4 +1,4 @@
-import type { TableNodeType } from "@/types/nodes.types";
+import type { GroupNodeType, TableNodeType } from "@/types/nodes.types";
 import type { NodeProps } from "@xyflow/react";
 import { BaseNode, BaseNodeHeader } from "./base-node";
 import { TableFoldHeader } from "./table-fold-header";
@@ -9,7 +9,7 @@ export const TableGroupNode = ({
   data,
   id,
   width,
-}: NodeProps<TableNodeType>) => {
+}: NodeProps<GroupNodeType>) => {
   return (
     <BaseNode
       id={id}
@@ -30,7 +30,12 @@ export const TableGroupNode = ({
       <div
         hidden={data.folded}
         className="flex-auto overflow-visible"
-        style={{ backgroundColor: data.color, opacity: selected ? 0.4 : 0.25 }}
+        style={{
+          backgroundColor: data.color,
+          opacity: selected ? 0.4 : 0.25,
+          width: data.dimensions.width,
+          height: data.dimensions.height,
+        }}
       ></div>
     </BaseNode>
   );

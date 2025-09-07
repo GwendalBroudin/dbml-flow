@@ -1,4 +1,9 @@
-import { GroupNodeType, NodeType, NodeTypes } from "@/types/nodes.types";
+import {
+  GroupNodeData,
+  GroupNodeType,
+  NodeType,
+  NodeTypes,
+} from "@/types/nodes.types";
 import { getNodesBounds, NodeBounds } from "../math/math.helper";
 import { NodeChange, NodePositionChange } from "@xyflow/react";
 import { vectorAdd, vectorSub } from "../math/vector.helper";
@@ -23,10 +28,18 @@ export function getBoundedGroups(
       .filter((n) => !!n);
 
     const bounds = getNodesBounds(children);
-    const dimensions = getGroupDimensionsAndPosition(bounds, groupPadding);
+    const position = getGroupPosition(bounds, groupPadding);
+    const dimensions = getGroupDimensions(bounds, groupPadding);
     return {
       ...groupNode,
-      ...dimensions,
+      position,
+      initialHeight: dimensions.heightWithHeader,
+      initialWidth: dimensions.width,
+      data: {
+        ...groupNode.data,
+        dimensions,
+        bounds,
+      },
     };
   });
 }
@@ -59,7 +72,6 @@ export function computeRelatedGroupChanges(
           dragging: true,
         });
       });
-
     } else if (oldNode.type === NodeTypes.Table && oldNode.data.groupId) {
       const groupParent = oldNodesById.get(oldNode.data.groupId) as
         | GroupNodeType
@@ -79,20 +91,26 @@ export function computeRelatedGroupChanges(
         .filter((n) => !!n);
 
       const bounds = getNodesBounds(children);
-      const dimensions = getGroupDimensionsAndPosition(bounds, groupPadding);
+      const dimensions = getGroupDimensions(bounds, groupPadding);
 
       computedChanges.push({
         id: groupParent.id,
-        type: "dimensions" as const,
-        dimensions: {
-          width: dimensions.width,
-          height: dimensions.height,
+        type: "replace" as const,
+        item: {
+          ...groupParent,
+          initialHeight: dimensions.heightWithHeader,
+          initialWidth: dimensions.width,
+          data: <GroupNodeData>{
+            ...groupParent.data,
+            bounds,
+            dimensions,
+          },
         },
       });
       computedChanges.push({
         id: groupParent.id,
         type: "position" as const,
-        position: dimensions.position,
+        position: getGroupPosition(bounds, groupPadding),
         dragging: true,
       });
     }
@@ -100,16 +118,18 @@ export function computeRelatedGroupChanges(
   return computedChanges;
 }
 
-export function getGroupDimensionsAndPosition(
-  bounds: NodeBounds,
-  padding: number
-) {
+export function getGroupPosition(bounds: NodeBounds, padding: number) {
+  return {
+    x: bounds.xMin - padding,
+    y: bounds.yMin - padding - HEADER_HEIGHT,
+  };
+}
+
+export function getGroupDimensions(bounds: NodeBounds, padding: number) {
+  const height = bounds.height + padding * 2;
   return {
     width: bounds.width + padding * 2,
-    height: bounds.height + padding * 2 + HEADER_HEIGHT,
-    position: {
-      x: bounds.xMin - padding,
-      y: bounds.yMin - padding - HEADER_HEIGHT,
-    },
+    heightWithHeader: height + HEADER_HEIGHT,
+    height,
   };
 }

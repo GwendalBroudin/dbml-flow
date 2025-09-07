@@ -2,8 +2,10 @@ import {
   FIELD_BORDER,
   FIELD_HEIGHT_TOTAL,
   FIELD_SPACING,
+  GROUP_Z_INDEX,
   HEADER_HEIGHT,
   PRIMARY_KEY_WIDTH,
+  TABLE_Z_INDEX,
 } from "@/components/table-constants";
 import {
   GroupNodeType,
@@ -40,25 +42,17 @@ export const paddingX = 20;
 export const paddingY = 20;
 
 function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
-  const childNodes = g.tables.map(getTableId).map((id) => nodes.get(id!)!);
-  // const initialWidth =
-  //   childNodes.reduce((acc, n) => acc + (n.initialWidth ?? 0), 0) +
-  //   (childNodes.length - 1) * paddingX;
-  // const initialHeight =
-  //   childNodes.reduce((acc, n) => acc + (n.initialHeight ?? 0), 0) + 20;
 
   return <GroupNodeType>{
     id: getGroupId(g),
     type: NodeTypes.TableGroup,
-    zIndex: -1001,
+    zIndex: GROUP_Z_INDEX, 
     data: {
       label: g.name,
       nodeIds: g.tables.map(getTableId),
       color: g.color,
       folded: false,
     },
-    // initialWidth,
-    // initialHeight,
   };
 }
 
@@ -69,7 +63,7 @@ export function mapTableToNode(table: Table) {
   return <TableNodeType>{
     id: tableId,
     type: NodeTypes.Table,
-    zIndex: 10,
+    zIndex: TABLE_Z_INDEX,
     data: {
       table,
       label: table.name,

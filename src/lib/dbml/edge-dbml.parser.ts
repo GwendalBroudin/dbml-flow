@@ -1,8 +1,8 @@
 import { ERMarkerTypes } from "@/components/edges/markers";
 import {
-    ERRelationTypes,
-    TableEdgeType,
-    TableEdgeTypeName,
+  ERRelationTypes,
+  TableEdgeType,
+  TableEdgeTypeName,
 } from "@/types/nodes.types";
 import Database from "@dbml/core/types/model_structure/database";
 import Endpoint from "@dbml/core/types/model_structure/endpoint";
@@ -40,6 +40,7 @@ export function mapToEdge(ref: Ref, foldedIds: Set<string>) {
     marker: markerStart,
     folded: sourceFolded,
     relationType: sourceRelationType,
+    nodeId: source,
   } = getHandleData(sourceField, sourceEndPoint, foldedIds);
 
   const {
@@ -47,12 +48,13 @@ export function mapToEdge(ref: Ref, foldedIds: Set<string>) {
     marker: markerEnd,
     folded: targetFolded,
     relationType: targetRelationType,
+    nodeId: target,
   } = getHandleData(targetField, targetEndPoint, foldedIds);
 
   return <TableEdgeType>{
     id: ref.id.toString(),
-    source: getTableId(sourceEndPoint.fields[0].table),
-    target: getTableId(targetEndPoint.fields[0].table),
+    source,
+    target,
     type: TableEdgeTypeName,
     sourceHandle,
     targetHandle,
@@ -79,17 +81,20 @@ function getHandleData(
   const groupNodeId = getGroupId(field.table.group);
   const fieldId = getFieldId(field);
   let handleId = fieldId;
+  let nodeId = tableNodeId;
 
   let folded = false;
   if (groupNodeId && foldedIds.has(groupNodeId)) {
     folded = true;
     handleId = groupNodeId;
+    nodeId = groupNodeId;
   } else if (foldedIds.has(tableNodeId)) {
     folded = true;
     handleId = tableNodeId;
   }
   const relationType = getRelationType(endPoint, field);
   return {
+    nodeId,
     handleId,
     marker: folded ? ERMarkerTypes.none : relationType,
     relationType,
