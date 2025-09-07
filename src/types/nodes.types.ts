@@ -12,7 +12,7 @@ export type SharedNodeData = {
 export type TableNodeData = SharedNodeData & {
   table: Table;
   index?: number;
-  groupId?: string; // group id
+  groupId?: string;
 };
 
 export const NodeTypes = {

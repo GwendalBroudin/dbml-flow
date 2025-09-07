@@ -14,8 +14,10 @@ import {
 } from "./table-constants";
 import { TableFoldHeader } from "./table-fold-header";
 import { TableBody, TableCell, TableRow } from "./ui/table";
+import useStore from "@/state/store";
+import { useCallback } from "react";
 
-function TableField(field: Field, table: Table) {
+function TableField(field: Field, table: Table, fieldOnly: boolean) {
   const indexes = table.indexes.filter((i) =>
     i.columns.some((c) => c.value === field.name)
   );
@@ -23,9 +25,11 @@ function TableField(field: Field, table: Table) {
   const unique = pk || field.unique || indexes.some((i) => i.unique);
 
   const attribute = pk ? <KeyRound size="0.7rem" /> : null;
+  const hidden = fieldOnly && !field.endpoints.some((e) => e.ref);
 
   return (
     <TableRow
+      hidden={hidden}
       key={field.name}
       className="relative text-sm"
       style={{
@@ -72,15 +76,23 @@ function TableField(field: Field, table: Table) {
 }
 
 export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
+  const { relationOnly, overrideRelationOnly, relationOnlyOverrides } =
+    useStore();
+
   const groupNode = data.groupId
     ? (useInternalNode(data.groupId) as InternalGroupNode)
     : null;
   const hidden = groupNode?.data.folded ?? false;
+  const isRelationOnly = relationOnly && !relationOnlyOverrides.has(id);
+
+  const relationOnlyCallback = useCallback(() => {
+    overrideRelationOnly(id, isRelationOnly);
+  }, [id, isRelationOnly, overrideRelationOnly]);
 
   return (
     <BaseNode
       id={id}
-      className="p-0 flex flex-col"
+      className="p-0 flex flex-col overflow-hidden"
       selected={selected}
       hidden={hidden}
     >
@@ -104,9 +116,20 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
         )}
       >
         <TableBody>
-          {data.table.fields.map((field) => TableField(field, data.table))}
+          {data.table.fields.map((field) =>
+            TableField(field, data.table, isRelationOnly)
+          )}
         </TableBody>
       </table>
+      {relationOnly && (
+        <div
+          className="hover:bg-accent flex items-center justify-center cursor-pointer"
+          onClick={relationOnlyCallback}
+          title={isRelationOnly ? "Show all fields" : "Show only relations fields"}
+        >
+          <p>...</p>
+        </div>
+      )}
     </BaseNode>
   );
 };

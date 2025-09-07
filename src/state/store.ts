@@ -42,6 +42,7 @@ import Database from "@dbml/core/types/model_structure/database";
 import { CompilerError } from "@dbml/core/types/parse/error";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
+import { replaceNodeData } from "@/lib/flow/nodes.helpers";
 
 // Helper type for parse results
 type ParseResult =
@@ -67,6 +68,9 @@ export type AppState = {
   minimap: boolean;
   edgesRelativeData: EdgesRelativeData;
   foldedIds: Set<string>;
+  relationOnly: boolean;
+  relationOnlyOverrides: Set<string>;
+
   //initialisation
   initState: () => void;
 
@@ -89,6 +93,8 @@ export type AppState = {
   onConnect: OnConnect;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
   foldNode: (nodeId: string, fold: boolean) => void;
+  setRelationOnly: (value: boolean) => void;
+  overrideRelationOnly: (nodeId: string, value: boolean) => void;
 
   setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
@@ -121,6 +127,8 @@ const useStore = create<AppState>((set, get) => ({
   edges: [] as Edge[],
   savedPositions: {},
   foldedIds: new Set<string>(),
+  relationOnly: false,
+  relationOnlyOverrides: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
   saveCodeInUrl: false,
@@ -235,27 +243,52 @@ const useStore = create<AppState>((set, get) => ({
     if (fold) newFoldedIds.add(nodeId);
     else newFoldedIds.delete(nodeId);
 
-    const newNodes = applyNodeChanges<NodeType>(
-      [
-        {
-          id: nodeId,
-          type: "replace" as const,
-          //@ts-ignore
-          item: {
-            ...node,
-            data: {
-              ...node.data,
-              folded: fold,
-            },
-          },
-        },
-      ],
-      nodes
-    );
+    const newNodes = replaceNodeData(nodes, node, nodeId, {
+      folded: fold,
+    });
 
     const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
 
     set({ foldedIds: newFoldedIds, nodes: newNodes, edges });
+  },
+
+  setRelationOnly: (value: boolean) => {
+    set({
+      relationOnly: value,
+      relationOnlyOverrides: new Set(),
+    });
+
+    setTimeout(() => {
+      const { nodes } = get();
+
+      const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
+      const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
+
+      const newGroupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
+
+      set({ nodes: [...newGroupNodes, ...tableNodes] });
+    }, 0);
+  },
+
+  overrideRelationOnly: (nodeId: string, value: boolean) => {
+    const { relationOnlyOverrides } = get();
+
+    const newOverrides = new Set(relationOnlyOverrides);
+    if (value) newOverrides.add(nodeId);
+    else newOverrides.delete(nodeId);
+
+    set({ relationOnlyOverrides: newOverrides });
+    //TODO optimize this
+    setTimeout(() => {
+      const { nodes } = get();
+
+      const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
+      const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
+
+      const newGroupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
+
+      set({ nodes: [...newGroupNodes, ...tableNodes] });
+    }, 0);
   },
 
   onNodesChange: (changes: NodeChange<NodeType>[]) => {

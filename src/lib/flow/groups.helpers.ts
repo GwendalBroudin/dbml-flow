@@ -91,22 +91,10 @@ export function computeRelatedGroupChanges(
         .filter((n) => !!n);
 
       const bounds = getNodesBounds(children);
-      const dimensions = getGroupDimensions(bounds, groupPadding);
 
-      computedChanges.push({
-        id: groupParent.id,
-        type: "replace" as const,
-        item: {
-          ...groupParent,
-          initialHeight: dimensions.heightWithHeader,
-          initialWidth: dimensions.width,
-          data: <GroupNodeData>{
-            ...groupParent.data,
-            bounds,
-            dimensions,
-          },
-        },
-      });
+      computedChanges.push(
+        computeGroupDimentionsChange(groupParent, bounds, groupPadding)
+      );
       computedChanges.push({
         id: groupParent.id,
         type: "position" as const,
@@ -116,6 +104,29 @@ export function computeRelatedGroupChanges(
     }
   }
   return computedChanges;
+}
+
+export function computeGroupDimentionsChange(
+  groupParent: GroupNodeType,
+  bounds: NodeBounds,
+  groupPadding: number
+) {
+  const dimensions = getGroupDimensions(bounds, groupPadding);
+
+  return {
+    id: groupParent.id,
+    type: "replace" as const,
+    item: {
+      ...groupParent,
+      initialHeight: dimensions.heightWithHeader,
+      initialWidth: dimensions.width,
+      data: <GroupNodeData>{
+        ...groupParent.data,
+        bounds,
+        dimensions,
+      },
+    },
+  };
 }
 
 export function getGroupPosition(bounds: NodeBounds, padding: number) {

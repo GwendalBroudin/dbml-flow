@@ -24,6 +24,7 @@ import ERMarkers from "../edges/markers";
 import TableEdge from "../edges/table-edge";
 import { TableGroupNode } from "../table-group-node";
 import { getNodeClass, getNodeColor } from "./viewer.helper";
+import RelationOnlyButton from "../controls/field-only-button";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -100,6 +101,7 @@ function ERViewer({ className, ...props }: FlowProps) {
       <Controls>
         <RearrangeButton />
         <MinimapButton />
+        <RelationOnlyButton />
       </Controls>
       {map}
     </ReactFlow>
