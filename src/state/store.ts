@@ -123,7 +123,7 @@ const useStore = create<AppState>((set, get) => ({
   foldedIds: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
-  saveCodeInUrl: true,
+  saveCodeInUrl: false,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
@@ -240,6 +240,7 @@ const useStore = create<AppState>((set, get) => ({
         {
           id: nodeId,
           type: "replace" as const,
+          //@ts-ignore
           item: {
             ...node,
             data: {

@@ -42,11 +42,10 @@ export const paddingX = 20;
 export const paddingY = 20;
 
 function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
-
   return <GroupNodeType>{
     id: getGroupId(g),
     type: NodeTypes.TableGroup,
-    zIndex: GROUP_Z_INDEX, 
+    zIndex: GROUP_Z_INDEX,
     data: {
       label: g.name,
       nodeIds: g.tables.map(getTableId),
@@ -108,14 +107,23 @@ let fontWidth = 7; //  getTextWidth() return wrong value on start up, to be inve
 const inlinePadding = 8;
 
 export function guessSize(table: Table) {
-  const longestField = table.fields
-    .map((f) => f.name + f.type.type_name)
-    .reduce((longest, e) => {
-      return e.length > longest.length ? e : longest;
-    }, "");
+  const longestField = table.fields.reduce(
+    (acc, f) => {
+      const typeLength = f.type.type_name.length;
+      const fieldLength = f.name.length;
+      return {
+        type: typeLength > acc.type ? typeLength : acc.type,
+        name: fieldLength > acc.name ? fieldLength : acc.name,
+      };
+    },
+    {
+      type: 0,
+      name: 0,
+    }
+  );
   return {
     width:
-      longestField.length * fontWidth +
+      (longestField.name + longestField.type) * fontWidth +
       inlinePadding * 2 +
       PRIMARY_KEY_WIDTH +
       FIELD_SPACING +

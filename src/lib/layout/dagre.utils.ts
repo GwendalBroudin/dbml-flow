@@ -37,12 +37,13 @@ export function getLayoutedGraph(
   });
 
   groupNodes.forEach((group) => {
+    dagreGraph.setNode(group.id, {});
     if (group.data.nodeIds.length === 0) return;
 
-    dagreGraph.setNode(group.id, {});
-    group.data.nodeIds.forEach((id) => {
-      dagreGraph.setParent(id, group.id);
-    });
+    if (!group.data.folded)
+      group.data.nodeIds.forEach((id) => {
+        dagreGraph.setParent(id, group.id);
+      });
   });
 
   edges.forEach((edge) => {

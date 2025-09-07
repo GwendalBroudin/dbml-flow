@@ -10,7 +10,7 @@ export type SharedNodeData = {
 };
 
 export type TableNodeData = SharedNodeData & {
-  table?: Table;
+  table: Table;
   index?: number;
   groupId?: string; // group id
 };
@@ -28,12 +28,12 @@ export type TableNodeType = Node<TableNodeData, "Table">;
 export type InternalTableNode = InternalNode & { data: TableNodeData };
 
 export type GroupNodeData = SharedNodeData & {
-  nodeIds?: string[];
-  dimensions?: {
+  nodeIds: string[];
+  dimensions: {
     width: number;
     height: number;
   };
-  bounds?: NodeBounds;
+  bounds: NodeBounds;
 };
 export type GroupNodeType = Node<GroupNodeData, "TableGroup">;
 export type InternalGroupNode = InternalNode & { data: GroupNodeData };
