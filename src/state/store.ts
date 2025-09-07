@@ -9,7 +9,6 @@ import {
   FitView,
   Node,
   NodeChange,
-  NodeDimensionChange,
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
@@ -18,36 +17,32 @@ import {
 import { create } from "zustand";
 
 import { StartupCode } from "@/components/editor/editor.constant";
+import { mapDatabaseToEdges } from "@/lib/dbml/edge-dbml.parser";
 import {
   extractPositions,
   parseDatabaseToGraph,
   parser,
   setPositionsInCode,
-} from "@/lib/dbml/parser";
+} from "@/lib/dbml/node-dmbl.parser";
+import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
 import {
   computeEdgesRelativeData,
   EdgesRelativeData,
 } from "@/lib/flow/edges.helpers";
-import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
-import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
-import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
-import {
-  GroupNodeType,
-  NodePositionIndex,
-  NodeType,
-  TableNodeType,
-} from "@/types/nodes.types";
-import Database from "@dbml/core/types/model_structure/database";
-import { debounce } from "lodash-es";
-import { editor } from "monaco-editor";
-import { getNodesBounds } from "@/lib/math/math.helper";
 import {
   computeRelatedGroupChanges,
   getBoundedGroups,
 } from "@/lib/flow/groups.helpers";
+import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
+import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
+import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { toMapId } from "@/lib/utils";
+import { NodePositionIndex, NodeType, NodeTypes } from "@/types/nodes.types";
+import Database from "@dbml/core/types/model_structure/database";
 import { CompilerError } from "@dbml/core/types/parse/error";
-import { formatDiagnosticsForMonaco } from "@/lib/editor/editor.helper";
+import { debounce } from "lodash-es";
+import { editor } from "monaco-editor";
+import { replaceNodeData } from "@/lib/flow/nodes.helpers";
 
 // Helper type for parse results
 type ParseResult =
@@ -69,11 +64,13 @@ export type AppState = {
   // ReactFlow state
   nodes: NodeType[];
   edges: Edge[];
-  groupNodes: GroupNodeType[];
-  tableNodes: TableNodeType[];
   savedPositions: NodePositionIndex;
   minimap: boolean;
   edgesRelativeData: EdgesRelativeData;
+  foldedIds: Set<string>;
+  relationOnly: boolean;
+  relationOnlyOverrides: Set<string>;
+
   //initialisation
   initState: () => void;
 
@@ -95,6 +92,9 @@ export type AppState = {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
+  foldNode: (nodeId: string, fold: boolean) => void;
+  setRelationOnly: (value: boolean) => void;
+  overrideRelationOnly: (nodeId: string, value: boolean) => void;
 
   setSavedPositions: (nodes: Node[]) => void;
   onLayout: (direction: string, fitView: FitView) => void;
@@ -124,13 +124,14 @@ const useStore = create<AppState>((set, get) => ({
   globalError: null,
   colorMode: "light",
   nodes: [] as NodeType[],
-  groupNodes: [] as GroupNodeType[],
-  tableNodes: [] as TableNodeType[],
   edges: [] as Edge[],
   savedPositions: {},
+  foldedIds: new Set<string>(),
+  relationOnly: false,
+  relationOnlyOverrides: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
-  saveCodeInUrl: true,
+  saveCodeInUrl: false,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
@@ -178,16 +179,16 @@ const useStore = create<AppState>((set, get) => ({
     if (!database) return;
     console.log("database", database);
 
-    const {
-      savedPositions: initialSavedPositions,
-      setSavedPositions,
-      tableNodes: oldTableNode,
-      groupNodes: oldGroupNodes,
-    } = get();
+    const { savedPositions: initialSavedPositions, setSavedPositions } = get();
+
+    const oldTableNode = get().nodes.filter((n) => n.type === NodeTypes.Table);
+    const oldGroupNodes = get().nodes.filter(
+      (n) => n.type === NodeTypes.TableGroup
+    );
 
     // Get initial layout
-    let { tableNodes, edges, groupNodes } = parseDatabaseToGraph(database);
-
+    let { tableNodes, groupNodes } = parseDatabaseToGraph(database);
+    const edges = mapDatabaseToEdges(database, get().foldedIds);
     const savedPositions = initialSavedPositions;
 
     if (
@@ -202,8 +203,6 @@ const useStore = create<AppState>((set, get) => ({
 
     groupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
     set({
-      tableNodes,
-      groupNodes,
       nodes: [...groupNodes, ...tableNodes],
       edges,
     });
@@ -232,6 +231,66 @@ const useStore = create<AppState>((set, get) => ({
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
 
+  foldNode: (nodeId: string, fold: boolean) => {
+    const { foldedIds, nodes } = get();
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) {
+      console.warn("Node not found for folding:", nodeId);
+      return;
+    }
+
+    const newFoldedIds = new Set(foldedIds);
+    if (fold) newFoldedIds.add(nodeId);
+    else newFoldedIds.delete(nodeId);
+
+    const newNodes = replaceNodeData(nodes, node, nodeId, {
+      folded: fold,
+    });
+
+    const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
+
+    set({ foldedIds: newFoldedIds, nodes: newNodes, edges });
+  },
+
+  setRelationOnly: (value: boolean) => {
+    set({
+      relationOnly: value,
+      relationOnlyOverrides: new Set(),
+    });
+
+    setTimeout(() => {
+      const { nodes } = get();
+
+      const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
+      const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
+
+      const newGroupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
+
+      set({ nodes: [...newGroupNodes, ...tableNodes] });
+    }, 0);
+  },
+
+  overrideRelationOnly: (nodeId: string, value: boolean) => {
+    const { relationOnlyOverrides } = get();
+
+    const newOverrides = new Set(relationOnlyOverrides);
+    if (value) newOverrides.add(nodeId);
+    else newOverrides.delete(nodeId);
+
+    set({ relationOnlyOverrides: newOverrides });
+    //TODO optimize this
+    setTimeout(() => {
+      const { nodes } = get();
+
+      const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
+      const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
+
+      const newGroupNodes = getBoundedGroups(groupNodes, toMapId(tableNodes));
+
+      set({ nodes: [...newGroupNodes, ...tableNodes] });
+    }, 0);
+  },
+
   onNodesChange: (changes: NodeChange<NodeType>[]) => {
     const { nodes } = get();
     const oldNodesById = toMapId<string, NodeType>(nodes);
@@ -239,20 +298,6 @@ const useStore = create<AppState>((set, get) => ({
     const computedChanges = computeRelatedGroupChanges(changes, oldNodesById);
 
     let newNodes = applyNodeChanges([...changes, ...computedChanges], nodes);
-
-    if (computedChanges.some((c) => c.type === "dimensions")) {
-      newNodes = newNodes.map((n) => {
-        const change = computedChanges.find(
-          (c) => c.type === "dimensions" && c.id === n.id
-        ) as NodeDimensionChange;
-        if (!change) return n;
-        return {
-          ...n,
-          width: change.dimensions!.width,
-          height: change.dimensions!.height,
-        };
-      });
-    }
 
     const edgesRelativeData = computeEdgesRelativeData(
       toMapId<string, NodeType>(newNodes),
@@ -297,14 +342,16 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
   onLayout: (direction, fitView) => {
-    const { tableNodes, groupNodes, edges } = get();
+    const { nodes, edges } = get();
+
+    const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
+    const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
+
     const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
 
     const newGroupNodes = getBoundedGroups(groupNodes, toMapId(newTableNodes));
 
     set({
-      tableNodes: newTableNodes,
-      groupNodes: newGroupNodes,
       nodes: [...newGroupNodes, ...newTableNodes],
     });
     get().setSavedPositions(tableNodes);

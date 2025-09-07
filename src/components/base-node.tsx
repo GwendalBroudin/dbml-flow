@@ -28,8 +28,9 @@ export const BaseNodeHeader = forwardRef<
     selected?: boolean;
     headerColor?: string;
     label: string;
+    beforeTitle?: React.ReactNode;
   }
->(({ className, selected, headerColor, label, ...props }, ref) => {
+>(({ className, selected, headerColor, label, beforeTitle, ...props }, ref) => {
   headerColor = headerColor || "var(--color-primary)";
   return (
     <div
@@ -42,8 +43,9 @@ export const BaseNodeHeader = forwardRef<
       }}
       {...props}
     >
-      <div className="p-1 pl-2">
-        <h2 className="font-semibold text-[15px] mix-blend-luminosity filter-invert">
+      <div className="p-1 pl-2 flex items-center gap-1 mix-blend-luminosity filter-invert">
+        {beforeTitle}
+        <h2 className="font-semibold text-[15px] ">
           {label}
         </h2>
       </div>

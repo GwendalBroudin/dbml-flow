@@ -9,3 +9,6 @@ export const PRIMARY_KEY_WIDTH = 17 as const;
 export const FIELD_SPACING = 12 as const;
 
 export const GROUP_PADDING = 10 as const;
+
+export const GROUP_Z_INDEX = -1001;
+export const TABLE_Z_INDEX = 10;

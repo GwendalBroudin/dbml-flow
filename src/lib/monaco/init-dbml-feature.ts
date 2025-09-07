@@ -1,6 +1,6 @@
 import { Monaco } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
-import { parser } from "../dbml/parser";
+import { parser } from "../dbml/node-dmbl.parser";
 
 export const initDbmlFetaures = (
   editor: editor.IStandaloneCodeEditor,

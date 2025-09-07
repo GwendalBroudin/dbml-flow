@@ -4,6 +4,7 @@ import useStore, { AppState } from "@/state/store";
 import { useShallow } from "zustand/react/shallow";
 
 import { TableNode } from "@/components/table-node";
+import { NodeTypes, TableEdgeTypeName } from "@/types/nodes.types";
 import {
   Background,
   ConnectionMode,
@@ -13,19 +14,17 @@ import {
   ReactFlowProvider,
   useNodesInitialized,
   useOnSelectionChange,
-  useReactFlow
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
 import DevTools from "../devTools/dev-tools";
-import HorizontalFloatingEdge, {
-  HorizontalFloatingEdgeTypeName,
-} from "../edges/horizontal-floating-edge";
 import ERMarkers from "../edges/markers";
-import { getNodeClass, getNodeColor } from "./viewer.helper";
+import TableEdge from "../edges/table-edge";
 import { TableGroupNode } from "../table-group-node";
-import { NodeTypes } from "@/types/nodes.types";
+import { getNodeClass, getNodeColor } from "./viewer.helper";
+import RelationOnlyButton from "../controls/field-only-button";
 
 const selector = (state: AppState) => ({
   nodes: state.nodes,
@@ -45,7 +44,7 @@ const nodeTypes = {
 };
 
 const edgeTypes = {
-  [HorizontalFloatingEdgeTypeName]: HorizontalFloatingEdge,
+  [TableEdgeTypeName]: TableEdge,
 };
 
 export type FlowProps = {} & React.ComponentProps<typeof ReactFlow>;
@@ -79,7 +78,9 @@ function ERViewer({ className, ...props }: FlowProps) {
     }
   }, [initialized, firstRender, setfirstRender]);
 
-  const map = minimap ? <MiniMap nodeColor={getNodeColor} nodeClassName={getNodeClass} /> : null;
+  const map = minimap ? (
+    <MiniMap nodeColor={getNodeColor} nodeClassName={getNodeClass} />
+  ) : null;
 
   return (
     <ReactFlow
@@ -100,6 +101,7 @@ function ERViewer({ className, ...props }: FlowProps) {
       <Controls>
         <RearrangeButton />
         <MinimapButton />
+        <RelationOnlyButton />
       </Controls>
       {map}
     </ReactFlow>

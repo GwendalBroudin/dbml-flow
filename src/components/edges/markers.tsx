@@ -6,10 +6,10 @@ export const ERMarkerTypes = {
 } as const;
 
 export const ERMakerLabels = {
-  none: "",
-  one: "1",
-  oneOptionnal: "0..1",
-  many: "*",
+  [ERMarkerTypes.none]: "",
+  [ERMarkerTypes.one]: "1",
+  [ERMarkerTypes.oneOptionnal]: "0..1",
+  [ERMarkerTypes.many]: "*", 
 } as const;
 
 export type ERMarkerProps = {
@@ -22,7 +22,7 @@ export const markerHeight = 10;
 export default function ERMarkers({ color }: ERMarkerProps) {
   color ??= "#b1b1b7";
   return (
-    <svg style={{ position: "absolute", height: 0, width: 0 }}>
+    <svg id="er-markers" style={{ position: "absolute", height: 0, width: 0 }}>
       <defs>
         <marker
           id={ERMarkerTypes.oneOptionnal}
@@ -64,6 +64,20 @@ export default function ERMarkers({ color }: ERMarkerProps) {
           viewBox={`0 0 ${markerWidth} ${markerHeight}`}
         >
           <path d="m0 5L20 5M11 5 20 1M11 5 20 9" />
+        </marker>
+
+        <marker
+          id={ERMarkerTypes.none}
+          refX={0}
+          refY={5}
+          markerWidth={markerWidth}
+          markerHeight={markerHeight}
+          fill="none"
+          stroke={color}
+          orient="auto-start-reverse"
+          viewBox={`0 0 ${markerWidth} ${markerHeight}`}
+        >
+          <path d="m0 5L20 5" />
         </marker>
       </defs>
     </svg>

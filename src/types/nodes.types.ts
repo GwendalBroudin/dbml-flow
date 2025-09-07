@@ -1,32 +1,42 @@
+import { NodeBounds } from "@/lib/math/math.helper";
 import Ref from "@dbml/core/types/model_structure/ref";
 import type Table from "@dbml/core/types/model_structure/table";
-import { Edge, type Node } from "@xyflow/react";
+import { Edge, InternalNode, type Node } from "@xyflow/react";
 
 export type SharedNodeData = {
   label: string;
   color?: string;
+  folded: boolean;
 };
 
 export type TableNodeData = SharedNodeData & {
   table: Table;
   index?: number;
-  parentId?: string; // group id
+  groupId?: string;
 };
 
 export const NodeTypes = {
-  TableGroup: 'TableGroup',
-  Table: 'Table',
+  TableGroup: "TableGroup",
+  Table: "Table",
 } as const;
 
-export type NodeTypes = typeof NodeTypes[keyof typeof NodeTypes]; 
+export const TableEdgeTypeName = "table-edge";
 
-export type TableNodeType = Node<TableNodeData, 'Table'>;
+export type NodeTypes = (typeof NodeTypes)[keyof typeof NodeTypes];
+
+export type TableNodeType = Node<TableNodeData, "Table">;
+export type InternalTableNode = InternalNode & { data: TableNodeData };
 
 export type GroupNodeData = SharedNodeData & {
   nodeIds: string[];
+  dimensions: {
+    width: number;
+    height: number;
+  };
+  bounds: NodeBounds;
 };
-export type GroupNodeType = Node<GroupNodeData, 'TableGroup'>;
-
+export type GroupNodeType = Node<GroupNodeData, "TableGroup">;
+export type InternalGroupNode = InternalNode & { data: GroupNodeData };
 
 export type NodeType = TableNodeType | GroupNodeType;
 
