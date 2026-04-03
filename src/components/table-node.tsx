@@ -21,6 +21,7 @@ import {
   TableFieldTooltip,
   TableFieldTooltipContent,
 } from "./table-field-tooltip/table-field-tooltip";
+import { TableFieldTooltipView } from "./table-field-tooltip/table-field-tooltip-view";
 
 export type TableFieldProps = {
   field: Field;
@@ -86,7 +87,7 @@ export const TableField = ({
           labelClassName="p-0 pr-2"
         />
       </TableCell>
-      <td>{children}</td>
+      {children && <td>{children}</td>}
     </TableRow>
   );
 };
@@ -110,34 +111,7 @@ function buildField(field: Field, table: Table, isRelationOnly: boolean) {
       <TableFieldTooltipTrigger>
         <TableField field={field} table={table} fieldOnly={isRelationOnly}>
           <TableFieldTooltipContent>
-            <div className="flex flex-col gap-1 px-2 py-1 text-gray-100 text-xs">
-              <div className=" text-xs pb-0.5 whitespace-nowrap border-b-2 border-b-muted-foreground">
-                <span className="">{field.name} </span>
-                <span className="text-blue-500">{field.type.type_name}</span>
-              </div>
-              {note && <div className="text-muted-foreground">{note}</div>}
-              {enumData && (
-                <div>
-                  <p>
-                    <span className="text-amber-800">ENUM </span>
-                    {enumData.name}:
-                  </p>
-                  <div className="ml-2 ">
-                    {enumData.values.map((v) => (
-                      <p key={v.name}>
-                        {v.name}
-                        {v.note && (
-                          <span className="text-muted-foreground">
-                            {" "}
-                            ({v.note})
-                          </span>
-                        )}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <TableFieldTooltipView field={field} />
           </TableFieldTooltipContent>
         </TableField>
       </TableFieldTooltipTrigger>
