@@ -79,7 +79,6 @@ export function TableFieldTooltipContent({
     return null;
   }
 
-  console.log("Rendering tooltip content");
   return (
     <>
       <div className="ml-1.5 absolute left-full top-1/2 size-1.5 rotate-45 z-49 bg-gray-900" />

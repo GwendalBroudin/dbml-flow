@@ -106,6 +106,19 @@ let fontWidth = 7; //  getTextWidth() return wrong value on start up, to be inve
 
 const inlinePadding = 8;
 
+export function guessFieldWidth(field: Field) {
+  const typeLength = field.type.type_name.length;
+  const fieldLength = field.name.length;
+
+  const pk_With = field.pk || field.unique ? PRIMARY_KEY_WIDTH : 0;
+  
+  return {
+    type: typeLength * fontWidth,
+    name: fieldLength * fontWidth,
+  }
+  return (fieldLength + typeLength) * fontWidth + inlinePadding * 2 + PRIMARY_KEY_WIDTH;
+}
+
 export function guessSize(table: Table) {
   const longestField = table.fields.reduce(
     (acc, f) => {

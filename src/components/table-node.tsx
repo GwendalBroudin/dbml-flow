@@ -22,17 +22,18 @@ import {
   TableFieldTooltipContent,
 } from "./table-field-tooltip/table-field-tooltip";
 import { TableFieldTooltipView } from "./table-field-tooltip/table-field-tooltip-view";
+import { hasFieldDetails } from "@/lib/dbml/dbml.utils";
 
 export type TableFieldProps = {
   field: Field;
   table: Table;
-  fieldOnly: boolean;
+  isRelationOnly: boolean;
 } & React.HTMLProps<HTMLTableRowElement>;
 
 export const TableField = ({
   field,
   table,
-  fieldOnly,
+  isRelationOnly,
   children,
   ...props
 }: TableFieldProps) => {
@@ -42,8 +43,9 @@ export const TableField = ({
   const pk = field.pk || indexes.some((i) => i.pk);
   const unique = pk || field.unique || indexes.some((i) => i.unique);
 
-  const attribute = pk ? <KeyRound size="0.7rem" /> : null;
-  const hidden = fieldOnly && !field.endpoints.some((e) => e.ref);
+  const pkAttribute = pk ? <KeyRound size="0.7rem" /> : null;
+
+  const hidden = isRelationOnly && !field.endpoints.some((e) => e.ref);
 
   return (
     <TableRow
@@ -72,7 +74,7 @@ export const TableField = ({
           labelClassName="p-0 pl-2"
         />
         <div style={{ width: PRIMARY_KEY_WIDTH }} className="flex justify-end">
-          {attribute}
+          {pkAttribute}
         </div>
       </TableCell>
 
@@ -93,23 +95,21 @@ export const TableField = ({
 };
 
 function buildField(field: Field, table: Table, isRelationOnly: boolean) {
-  const enumData = field._enum;
-  const note = field.note;
-
-  if (!enumData && !note)
+  const hasDetails = hasFieldDetails(field);
+  if (!hasDetails)
     return (
       <TableField
         key={field.name}
         field={field}
         table={table}
-        fieldOnly={isRelationOnly}
+        isRelationOnly={isRelationOnly}
       />
     );
 
   return (
     <TableFieldTooltip key={field.name}>
       <TableFieldTooltipTrigger>
-        <TableField field={field} table={table} fieldOnly={isRelationOnly}>
+        <TableField field={field} table={table} isRelationOnly={isRelationOnly}>
           <TableFieldTooltipContent>
             <TableFieldTooltipView field={field} />
           </TableFieldTooltipContent>
