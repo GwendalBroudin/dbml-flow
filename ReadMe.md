@@ -11,6 +11,7 @@
 - [x] Show relation fields only
 - [x] Show table header only
 - [ ] Enums 
+- [ ] Composite foreign keys
 
 ## Notes 
 - [ ] Floating Notes 
@@ -25,6 +26,7 @@
 
 ## Misc
 - [ ] Generate svg, png
+- [ ] Download image from url (server side)
 - [ ] Hide editor 
 - [x] Viewer mode
 - [ ] Download dbml file from url (add warning when try to modify code)
