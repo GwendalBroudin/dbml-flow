@@ -1,11 +1,6 @@
 import {
-  FIELD_BORDER,
-  FIELD_HEIGHT_TOTAL,
-  FIELD_SPACING,
   GROUP_Z_INDEX,
-  HEADER_HEIGHT,
-  PRIMARY_KEY_WIDTH,
-  TABLE_Z_INDEX,
+  TABLE_Z_INDEX
 } from "@/components/table-constants";
 import {
   GroupNodeType,
@@ -18,6 +13,7 @@ import Database from "@dbml/core/types/model_structure/database";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
 import TableGroup from "@dbml/core/types/model_structure/tableGroup";
+import { findClosestSize } from "./dbml.math";
 
 //#region DBML to Nodes
 
@@ -58,7 +54,7 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
 export function mapTableToNode(table: Table) {
   const tableId = getTableId(table);
 
-  const guessed = guessSize(table);
+  const guessed = findClosestSize(table);
   return <TableNodeType>{
     id: tableId,
     type: NodeTypes.Table,
@@ -72,6 +68,8 @@ export function mapTableToNode(table: Table) {
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,
+    width: guessed.width,
+    height: guessed.height,
     position: { x: 0, y: 0 },
   };
 }
@@ -98,53 +96,6 @@ function getBaseId(table: Table | TableGroup) {
 
 // #endregion
 
-// #region size guesser
-
-// Guess size function for nodes
-
-let fontWidth = 7; //  getTextWidth() return wrong value on start up, to be investigated
-
-const inlinePadding = 8;
-
-export function guessFieldWidth(field: Field) {
-  const typeLength = field.type.type_name.length;
-  const fieldLength = field.name.length;
-
-  const pk_With = field.pk || field.unique ? PRIMARY_KEY_WIDTH : 0;
-  
-  return {
-    type: typeLength * fontWidth,
-    name: fieldLength * fontWidth,
-  }
-  return (fieldLength + typeLength) * fontWidth + inlinePadding * 2 + PRIMARY_KEY_WIDTH;
-}
-
-export function guessSize(table: Table) {
-  const longestField = table.fields.reduce(
-    (acc, f) => {
-      const typeLength = f.type.type_name.length;
-      const fieldLength = f.name.length;
-      return {
-        type: typeLength > acc.type ? typeLength : acc.type,
-        name: fieldLength > acc.name ? fieldLength : acc.name,
-      };
-    },
-    {
-      type: 0,
-      name: 0,
-    }
-  );
-  return {
-    width:
-      (longestField.name + longestField.type) * fontWidth +
-      inlinePadding * 2 +
-      PRIMARY_KEY_WIDTH +
-      FIELD_SPACING +
-      FIELD_BORDER * 2,
-    height: table.fields.length * FIELD_HEIGHT_TOTAL + HEADER_HEIGHT,
-  };
-}
-// #endregion
 
 //#region Position Store
 

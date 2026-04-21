@@ -12,7 +12,7 @@ import { LabeledHandle } from "./labeled-handle";
 import {
   FIELD_HEIGHT,
   FIELD_SPACING,
-  PRIMARY_KEY_WIDTH,
+  ICON_WIDTH,
 } from "./table-constants";
 import { TableFoldHeader } from "./table-fold-header";
 import { TableBody, TableCell, TableRow } from "./ui/table";
@@ -73,7 +73,7 @@ export const TableField = ({
           className="bold"
           labelClassName="p-0 pl-2"
         />
-        <div style={{ width: PRIMARY_KEY_WIDTH }} className="flex justify-end">
+        <div style={{ width: ICON_WIDTH }} className="flex justify-end">
           {pkAttribute}
         </div>
       </TableCell>
