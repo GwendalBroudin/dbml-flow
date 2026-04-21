@@ -4,7 +4,7 @@ import useStore, { AppState } from "@/state/store";
 import { useShallow } from "zustand/react/shallow";
 
 import { TableNode } from "@/components/table-node";
-import { NodeTypes, TableEdgeTypeName } from "@/types/nodes.types";
+import { NodeType, NodeTypes, TableEdgeTypeName } from "@/types/nodes.types";
 import {
   Background,
   ConnectionMode,
@@ -16,7 +16,7 @@ import {
   useOnSelectionChange,
   useReactFlow,
 } from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import RelationOnlyButton from "../controls/field-only-button";
 import MinimapButton from "../controls/minimap-button";
 import RearrangeButton from "../controls/rearrange-button";
 import DevTools from "../devTools/dev-tools";
@@ -24,19 +24,6 @@ import ERMarkers from "../edges/markers";
 import TableEdge from "../edges/table-edge";
 import { TableGroupNode } from "../table-group-node";
 import { getNodeClass, getNodeColor } from "./viewer.helper";
-import RelationOnlyButton from "../controls/field-only-button";
-
-const selector = (state: AppState) => ({
-  nodes: state.nodes,
-  edges: state.edges,
-  onNodesChange: state.onNodesChange,
-  onEdgesChange: state.onEdgesChange,
-  onConnect: state.onConnect,
-  onChange: state.onChange,
-  minimap: state.minimap,
-  firstRender: state.firstRender,
-  setfirstRender: state.setfirstRender,
-});
 
 const nodeTypes = {
   [NodeTypes.Table]: TableNode,
@@ -62,7 +49,11 @@ function ERViewer({ className, ...props }: FlowProps) {
     minimap,
     firstRender,
     setfirstRender,
-  } = useStore(useShallow(selector));
+    onNodeClick,
+    onNodeMouseEnter,
+    onNodeMouseLeave,
+    unselectNodes,
+  } = useStore();
   const { fitView } = useReactFlow();
   const initialized = useNodesInitialized();
 
@@ -91,6 +82,10 @@ function ERViewer({ className, ...props }: FlowProps) {
       edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
+      onPaneClick={(evt) => unselectNodes()}
+      onNodeClick={(_, node) => onNodeClick(node)}
+      onNodeMouseEnter={(_, node) => onNodeMouseEnter(node)}
+      onNodeMouseLeave={(_, node) => onNodeMouseLeave(node)}
       onConnect={onConnect}
       fitView
       minZoom={minZoomLevel}

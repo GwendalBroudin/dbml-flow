@@ -17,6 +17,7 @@ export const TableFoldHeader = forwardRef<
     folded?: boolean;
     headerClassName?: string;
     data: TableNodeData | GroupNodeData;
+    afterTitle?: React.ReactNode;
   }
 >(
   (
@@ -29,6 +30,7 @@ export const TableFoldHeader = forwardRef<
       label,
       headerClassName,
       data,
+      afterTitle,
       ...props
     },
     ref
@@ -68,7 +70,9 @@ export const TableFoldHeader = forwardRef<
             headerClassName
           )}
           beforeTitle={foldButton}
+          afterTitle={afterTitle}
         />
+        {props.children}
         <HiddenHandle id={id} type="source" position={Position.Right} />
       </div>
     );

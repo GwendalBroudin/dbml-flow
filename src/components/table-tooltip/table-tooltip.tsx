@@ -18,14 +18,20 @@ const TooltipContext = createContext<TooltipContextType | null>(null);
 
 /* TOOLTIP NODE ------------------------------------------------------------- */
 
-export const TableFieldTooltip = forwardRef<
+export const TableTooltip = forwardRef<
   HTMLElement,
-  HTMLAttributes<HTMLElement>
->(({ children }, ref) => {
+  HTMLAttributes<HTMLElement> & { onFocus?: () => void; onBlur?: () => void }
+>(({ children, onFocus, onBlur }, ref) => {
   const [isVisible, setIsVisible] = useState(false);
 
-  const showTooltip = useCallback(() => setIsVisible(true), []);
-  const hideTooltip = useCallback(() => setIsVisible(false), []);
+  const showTooltip = useCallback(() => {
+    setIsVisible(true);
+    onFocus?.();
+  }, [onFocus]);
+  const hideTooltip = useCallback(() => {
+    setIsVisible(false);
+    onBlur?.();
+  }, [onBlur]);
 
   return (
     <TooltipContext.Provider value={{ isVisible, showTooltip, hideTooltip }}>
@@ -33,24 +39,22 @@ export const TableFieldTooltip = forwardRef<
     </TooltipContext.Provider>
   );
 });
-TableFieldTooltip.displayName = "TableFieldTooltip";
+TableTooltip.displayName = "TableTooltip";
 
 /* TOOLTIP TRIGGER ---------------------------------------------------------- */
-export function TableFieldTooltipTrigger({
+export function TableTooltipTrigger({
   children,
   ...props
 }: React.HTMLProps<HTMLElement>) {
   if (!React.isValidElement(children)) {
     throw new Error(
-      "TableFieldTooltipTrigger children must be a single React element",
+      "TableTooltipTrigger children must be a single React element",
     );
   }
 
   const tooltipContext = React.useContext(TooltipContext);
   if (!tooltipContext) {
-    throw new Error(
-      "TableFieldTooltipTrigger must be used within TableFieldTooltip",
-    );
+    throw new Error("TableTooltipTrigger must be used within TableTooltip");
   }
 
   const child = React.Children.only(children);
@@ -63,28 +67,29 @@ export function TableFieldTooltipTrigger({
   });
 }
 
-export function TableFieldTooltipContent({
+export function TableTooltipContent({
   children,
   className,
+  forceVisible,
   ...props
-}: React.HTMLProps<HTMLDivElement>) {
+}: React.HTMLProps<HTMLDivElement> & { forceVisible?: boolean }) {
   const tooltipContext = React.useContext(TooltipContext);
   if (!tooltipContext) {
-    throw new Error(
-      "TableFieldTooltipContent must be used within TableFieldTooltip",
-    );
+    throw new Error("TableTooltipContent must be used within TableTooltip");
   }
   const { isVisible } = tooltipContext;
-  if (!isVisible) {
+  if (!isVisible && !forceVisible) {
     return null;
   }
 
   return (
     <>
-      <div className="ml-1.5 absolute left-full top-1/2 size-1.5 rotate-45 z-49 bg-gray-900" />
+      {/* this avoid hidding the popup when user tries to hover the popup */}
+      <div className="absolute top-0 left-full -translate-x-1 bg-transparent h-full w-3" />
+      <div className="ml-1.5 absolute left-full top-1/2 size-1.5 rotate-45 z-5000 bg-gray-900" />
       <div
         className={cn(
-          "absolute left-full top-0 ml-2 z-50 bg-gray-900 rounded shadow-lg",
+          "absolute left-full top-0 ml-2 z-5000 bg-gray-900 rounded shadow-lg",
           className,
         )}
         {...props}

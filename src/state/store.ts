@@ -43,6 +43,7 @@ import { CompilerError } from "@dbml/core/types/parse/error";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
 import { replaceNodeData } from "@/lib/flow/nodes.helpers";
+import { pressedKeys } from "@/lib/input/key.utils";
 
 // Helper type for parse results
 type ParseResult =
@@ -92,6 +93,10 @@ export type AppState = {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
+  onNodeClick: (node: NodeType) => void;
+  onNodeMouseEnter: (node: NodeType) => void;
+  onNodeMouseLeave: (node: NodeType) => void;
+  unselectNodes: () => void;
   foldNode: (nodeId: string, fold: boolean) => void;
   setRelationOnly: (value: boolean) => void;
   overrideRelationOnly: (nodeId: string, value: boolean) => void;
@@ -106,12 +111,12 @@ const setPositionsInCodeDebounced = debounce(
   (
     code: string,
     savedPositions: NodePositionIndex,
-    setCode: (code: string) => void
+    setCode: (code: string) => void,
   ) => {
     const newCode = setPositionsInCode(code, savedPositions);
     setCode(newCode);
   },
-  debounceTime
+  debounceTime,
 );
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
@@ -183,7 +188,7 @@ const useStore = create<AppState>((set, get) => ({
 
     const oldTableNode = get().nodes.filter((n) => n.type === NodeTypes.Table);
     const oldGroupNodes = get().nodes.filter(
-      (n) => n.type === NodeTypes.TableGroup
+      (n) => n.type === NodeTypes.TableGroup,
     );
 
     // Get initial layout
@@ -230,6 +235,11 @@ const useStore = create<AppState>((set, get) => ({
   // -------- Flow Actions --------
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
+
+  focusNode: (nodeId: string) => {
+    const node = get().nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+  },
 
   foldNode: (nodeId: string, fold: boolean) => {
     const { foldedIds, nodes } = get();
@@ -301,7 +311,7 @@ const useStore = create<AppState>((set, get) => ({
 
     const edgesRelativeData = computeEdgesRelativeData(
       toMapId<string, NodeType>(newNodes),
-      get().edges
+      get().edges,
     );
 
     get().setSavedPositions(newNodes);
@@ -324,11 +334,75 @@ const useStore = create<AppState>((set, get) => ({
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
       animated: selected.nodes.some(
-        (n) => n.id === edge.source || n.id === edge.target
+        (n) => n.id === edge.source || n.id === edge.target,
       ),
     }));
 
     set({ edges: edgesAnimated });
+  },
+
+  onNodeClick: (node: NodeType) => {
+    if (node.type !== NodeTypes.Table) return;
+
+    const { nodes } = get();
+    const keepSelect = !node.data.keepSelectOnMouseLeave;
+    console.log(pressedKeys);
+    const multiSelect = pressedKeys.has("Shift");
+
+    const newNodes = nodes.map((n) => {
+      // Select clicked node and update keepSelectOnMouseLeave
+      if (n.id === node.id) {
+        return {
+          ...n,
+          data: { ...n.data, keepSelectOnMouseLeave: keepSelect },
+        };
+      }
+      // keep other selected nodes unchanged if multiSelect is on
+      else if (multiSelect && n.selected) {
+        return n;
+      }
+      // Deselect other nodes and reset their keepSelectOnMouseLeave
+      return {
+        ...n,
+        selected: false,
+        data: { ...n.data, keepSelectOnMouseLeave: false },
+      };
+    });
+    set({ nodes: newNodes as NodeType[] });
+  },
+
+  onNodeMouseEnter: (node: NodeType) => {
+    if (node.type !== NodeTypes.Table) return;
+    const { onNodesChange } = get();
+    onNodesChange([
+      {
+        id: node.id,
+        type: "select",
+        selected: true,
+      },
+    ]);
+  },
+
+  onNodeMouseLeave: (node: NodeType) => {
+    if (node.type !== NodeTypes.Table) return;
+    const { onNodesChange } = get();
+    onNodesChange([
+      {
+        id: node.id,
+        type: "select",
+        selected: node.data.keepSelectOnMouseLeave,
+      },
+    ]);
+  },
+
+  unselectNodes: () => {
+    const { nodes } = get();
+    const newNodes = nodes.map((n) => ({
+      ...n,
+      selected: false,
+      data: { ...n.data, keepSelectOnMouseLeave: false },
+    }));
+    set({ nodes: newNodes as NodeType[] });
   },
 
   // Layout management

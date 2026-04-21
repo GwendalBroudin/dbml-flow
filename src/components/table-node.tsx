@@ -1,98 +1,23 @@
-import { getFieldId } from "@/lib/dbml/node-dmbl.parser";
+import { hasFieldDetails } from "@/lib/dbml/dbml.utils";
 import { cn } from "@/lib/utils";
 import useStore from "@/state/store";
 import { InternalGroupNode, type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
-import { type NodeProps, Position, useInternalNode } from "@xyflow/react";
-import { KeyRound } from "lucide-react";
-import React, { useCallback } from "react";
+import { type NodeProps, useInternalNode } from "@xyflow/react";
+import { StickyNote } from "lucide-react";
+import { useCallback } from "react";
 import { BaseNode } from "./base-node";
-import { LabeledHandle } from "./labeled-handle";
-import {
-  FIELD_HEIGHT,
-  FIELD_SPACING,
-  ICON_WIDTH,
-} from "./table-constants";
 import { TableFoldHeader } from "./table-fold-header";
-import { TableBody, TableCell, TableRow } from "./ui/table";
+import { TableField } from "./table-node-field";
+import { TableFieldTooltipView } from "./table-tooltip/table-field-tooltip-view";
+import { TableHeaderTooltipView } from "./table-tooltip/table-header-tooltip-view";
 import {
-  TableFieldTooltipTrigger,
-  TableFieldTooltip,
-  TableFieldTooltipContent,
-} from "./table-field-tooltip/table-field-tooltip";
-import { TableFieldTooltipView } from "./table-field-tooltip/table-field-tooltip-view";
-import { hasFieldDetails } from "@/lib/dbml/dbml.utils";
-
-export type TableFieldProps = {
-  field: Field;
-  table: Table;
-  isRelationOnly: boolean;
-} & React.HTMLProps<HTMLTableRowElement>;
-
-export const TableField = ({
-  field,
-  table,
-  isRelationOnly,
-  children,
-  ...props
-}: TableFieldProps) => {
-  const indexes = table.indexes.filter((i) =>
-    i.columns.some((c) => c.value === field.name),
-  );
-  const pk = field.pk || indexes.some((i) => i.pk);
-  const unique = pk || field.unique || indexes.some((i) => i.unique);
-
-  const pkAttribute = pk ? <KeyRound size="0.7rem" /> : null;
-
-  const hidden = isRelationOnly && !field.endpoints.some((e) => e.ref);
-
-  return (
-    <TableRow
-      {...props}
-      hidden={hidden}
-      className="relative text-sm whitespace-nowrap"
-      style={{
-        height: FIELD_HEIGHT,
-      }}
-    >
-      <TableCell
-        className={cn(
-          "py-0.5 pl-0 flex items-center",
-          unique ? "font-semibold" : "font-normal",
-        )}
-        style={{
-          paddingRight: FIELD_SPACING,
-        }}
-      >
-        <LabeledHandle
-          id={getFieldId(field)}
-          title={field.name}
-          type="target"
-          position={Position.Left}
-          className="bold"
-          labelClassName="p-0 pl-2"
-        />
-        <div style={{ width: ICON_WIDTH }} className="flex justify-end">
-          {pkAttribute}
-        </div>
-      </TableCell>
-
-      <TableCell className="py-0.5 px-0 text-right font-light">
-        <LabeledHandle
-          id={getFieldId(field)}
-          title={field.type.type_name}
-          type="source"
-          position={Position.Right}
-          className="p-0"
-          handleClassName="p-0"
-          labelClassName="p-0 pr-2"
-        />
-      </TableCell>
-      {children && <td>{children}</td>}
-    </TableRow>
-  );
-};
+  TableTooltip,
+  TableTooltipContent,
+  TableTooltipTrigger,
+} from "./table-tooltip/table-tooltip";
+import { TableBody } from "./ui/table";
 
 function buildField(field: Field, table: Table, isRelationOnly: boolean) {
   const hasDetails = hasFieldDetails(field);
@@ -107,15 +32,59 @@ function buildField(field: Field, table: Table, isRelationOnly: boolean) {
     );
 
   return (
-    <TableFieldTooltip key={field.name}>
-      <TableFieldTooltipTrigger>
+    <TableTooltip key={field.name}>
+      <TableTooltipTrigger>
         <TableField field={field} table={table} isRelationOnly={isRelationOnly}>
-          <TableFieldTooltipContent>
+          <TableTooltipContent>
             <TableFieldTooltipView field={field} />
-          </TableFieldTooltipContent>
+          </TableTooltipContent>
         </TableField>
-      </TableFieldTooltipTrigger>
-    </TableFieldTooltip>
+      </TableTooltipTrigger>
+    </TableTooltip>
+  );
+}
+
+function Header({
+  selected,
+  data,
+  id,
+}: Pick<NodeProps<TableNodeType>, "selected" | "data" | "id">) {
+  const hasNote = !!data.table.note;
+  if (!hasNote) {
+    return (
+      <TableFoldHeader
+        id={id}
+        data={data}
+        selected={selected}
+        headerColor={data.color}
+        label={data.label}
+        folded={data.folded}
+        color={data.color}
+      />
+    );
+  }
+
+  const noteIcon = <StickyNote size="1rem" className="pl-1" />;
+
+  return (
+    <TableTooltip >
+      <TableTooltipTrigger>
+        <TableFoldHeader
+          id={id}
+          data={data}
+          selected={selected}
+          headerColor={data.color}
+          label={data.label}
+          folded={data.folded}
+          color={data.color}
+          afterTitle={noteIcon}
+        >
+          <TableTooltipContent>
+            <TableHeaderTooltipView table={data.table} />
+          </TableTooltipContent>
+        </TableFoldHeader>
+      </TableTooltipTrigger>
+    </TableTooltip>
   );
 }
 
@@ -140,15 +109,7 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
       selected={selected}
       hidden={hidden}
     >
-      <TableFoldHeader
-        id={id}
-        data={data}
-        selected={selected}
-        headerColor={data.color}
-        label={data.label}
-        folded={data.folded}
-        color={data.color}
-      />
+      <Header selected={selected} data={data} id={id} />
 
       {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
 

@@ -7,6 +7,7 @@ export type SharedNodeData = {
   label: string;
   color?: string;
   folded: boolean;
+  keepSelectOnMouseLeave: boolean;
 };
 
 export type TableNodeData = SharedNodeData & {

@@ -3,7 +3,7 @@ import {
     FIELD_HEIGHT_TOTAL,
     FIELD_SPACING,
     HEADER_HEIGHT,
-    ICON_WIDTH,
+    ICON_SIZE,
 } from "@/components/table-constants";
 import Table from "@dbml/core/types/model_structure/table";
 
@@ -16,7 +16,7 @@ const inlinePadding = 8;
 export const tableWidth = [150, 200, 250, 300].map((w) => ({
   width: w,
   maxCharacters: Math.floor(
-    (w - inlinePadding * 2 - ICON_WIDTH * 2) / fontWidth,
+    (w - inlinePadding * 2 - ICON_SIZE * 2) / fontWidth,
   ),
 }));
 
@@ -38,7 +38,7 @@ export function guessSize(table: Table) {
     width:
       (longest.name + longest.type) * fontWidth +
       inlinePadding * 2 +
-      ICON_WIDTH * 2 +
+      ICON_SIZE * 2 +
       FIELD_SPACING +
       FIELD_BORDER * 2,
     height: getHeight(table),
