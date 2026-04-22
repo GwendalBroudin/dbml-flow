@@ -49,10 +49,8 @@ function ERViewer({ className, ...props }: FlowProps) {
     minimap,
     firstRender,
     setfirstRender,
-    onNodeClick,
     onNodeMouseEnter,
     onNodeMouseLeave,
-    unselectNodes,
   } = useStore();
   const { fitView } = useReactFlow();
   const initialized = useNodesInitialized();
@@ -82,8 +80,6 @@ function ERViewer({ className, ...props }: FlowProps) {
       edgeTypes={edgeTypes}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
-      onPaneClick={(evt) => unselectNodes()}
-      onNodeClick={(_, node) => onNodeClick(node)}
       onNodeMouseEnter={(_, node) => onNodeMouseEnter(node)}
       onNodeMouseLeave={(_, node) => onNodeMouseLeave(node)}
       onConnect={onConnect}

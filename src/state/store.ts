@@ -93,10 +93,8 @@ export type AppState = {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
-  onNodeClick: (node: NodeType) => void;
   onNodeMouseEnter: (node: NodeType) => void;
   onNodeMouseLeave: (node: NodeType) => void;
-  unselectNodes: () => void;
   foldNode: (nodeId: string, fold: boolean) => void;
   setRelationOnly: (value: boolean) => void;
   overrideRelationOnly: (nodeId: string, value: boolean) => void;
@@ -336,68 +334,24 @@ const useStore = create<AppState>((set, get) => ({
     set({ edges: edgesAnimated });
   },
 
-  onNodeClick: (node: NodeType) => {
-    console.log("Node clicked:", node);
-    if (node.type !== NodeTypes.Table) return;
-
-    const { nodes } = get();
-    const keepSelect = !node.data.keepSelectOnMouseLeave;
-    const multiSelect = pressedKeys.has("Shift");
-
-    const newNodes = nodes.map((n) => {
-      // Select clicked node and update keepSelectOnMouseLeave
-      if (n.id === node.id) {
-        return {
-          ...n,
-          data: { ...n.data, keepSelectOnMouseLeave: keepSelect },
-        };
-      }
-      // keep other selected nodes unchanged if multiSelect is on
-      else if (multiSelect && n.selected) {
-        return n;
-      }
-      // Deselect other nodes and reset their keepSelectOnMouseLeave
-      return {
-        ...n,
-        selected: false,
-        data: { ...n.data, keepSelectOnMouseLeave: false },
-      };
-    });
-    set({ nodes: newNodes as NodeType[] });
-  },
-
   onNodeMouseEnter: (node: NodeType) => {
-    if (node.type !== NodeTypes.Table) return;
-    const { onNodesChange } = get();
-    onNodesChange([
-      {
-        id: node.id,
-        type: "select",
-        selected: true,
-      },
-    ]);
+    node.data.hovered = true;
+
+    //fix popup under other selected nodes when hovering a table node
+    if (node.type === NodeTypes.Table) {
+      document
+        .querySelector(`[data-id="${node.id}"]`)
+        ?.classList.add("z-2000!");
+    }
   },
 
   onNodeMouseLeave: (node: NodeType) => {
-    if (node.type !== NodeTypes.Table) return;
-    const { onNodesChange } = get();
-    onNodesChange([
-      {
-        id: node.id,
-        type: "select",
-        selected: node.data.keepSelectOnMouseLeave,
-      },
-    ]);
-  },
-
-  unselectNodes: () => {
-    const { nodes } = get();
-    const newNodes = nodes.map((n) => ({
-      ...n,
-      selected: false,
-      data: { ...n.data, keepSelectOnMouseLeave: false },
-    }));
-    set({ nodes: newNodes as NodeType[] });
+    node.data.hovered = false;
+    if (node.type === NodeTypes.Table) {
+      document
+        .querySelector(`[data-id="${node.id}"]`)
+        ?.classList.remove("z-2000!");
+    }
   },
 
   // Layout management
