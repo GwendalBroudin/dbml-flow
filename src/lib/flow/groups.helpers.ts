@@ -20,7 +20,7 @@ import { GROUP_PADDING, HEADER_HEIGHT } from "@/components/table-constants";
 export function getBoundedGroups(
   groupNodes: GroupNodeType[],
   childrenNodesById: Map<string, NodeType>,
-  groupPadding = GROUP_PADDING
+  groupPadding = GROUP_PADDING,
 ) {
   return groupNodes.map((groupNode) => {
     const children = groupNode.data.nodeIds
@@ -47,7 +47,7 @@ export function getBoundedGroups(
 export function computeRelatedGroupChanges(
   changes: NodeChange<NodeType>[],
   oldNodesById: Map<string, NodeType>,
-  groupPadding = GROUP_PADDING
+  groupPadding = GROUP_PADDING,
 ) {
   const computedChanges = [] as NodeChange<NodeType>[];
   for (const change of changes) {
@@ -56,7 +56,7 @@ export function computeRelatedGroupChanges(
     const oldNode = oldNodesById.get(change.id);
     if (!oldNode) continue;
 
-    if (oldNode.type === NodeTypes.TableGroup) {
+    if (oldNode.type === NodeTypes.TableGroup && change.type === "position") {
       if (oldNode.data.nodeIds.length === 0) continue; // no children, no need to update anything
 
       const drag = vectorSub(change.position!, oldNode.position);
@@ -93,14 +93,8 @@ export function computeRelatedGroupChanges(
       const bounds = getNodesBounds(children);
 
       computedChanges.push(
-        computeGroupDimentionsChange(groupParent, bounds, groupPadding)
+        computeGroupDimentionsChange(groupParent, bounds, groupPadding),
       );
-      computedChanges.push({
-        id: groupParent.id,
-        type: "position" as const,
-        position: getGroupPosition(bounds, groupPadding),
-        dragging: true,
-      });
     }
   }
   return computedChanges;
@@ -109,7 +103,7 @@ export function computeRelatedGroupChanges(
 export function computeGroupDimentionsChange(
   groupParent: GroupNodeType,
   bounds: NodeBounds,
-  groupPadding: number
+  groupPadding: number,
 ) {
   const dimensions = getGroupDimensions(bounds, groupPadding);
 
@@ -120,6 +114,8 @@ export function computeGroupDimentionsChange(
       ...groupParent,
       initialHeight: dimensions.heightWithHeader,
       initialWidth: dimensions.width,
+      position: getGroupPosition(bounds, groupPadding),
+      dragging: true,
       data: <GroupNodeData>{
         ...groupParent.data,
         bounds,

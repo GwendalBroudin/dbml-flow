@@ -236,11 +236,6 @@ const useStore = create<AppState>((set, get) => ({
   setfirstRender: (firstRender) => set({ firstRender }),
   setMinimap: (minimap) => set({ minimap }),
 
-  focusNode: (nodeId: string) => {
-    const node = get().nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-  },
-
   foldNode: (nodeId: string, fold: boolean) => {
     const { foldedIds, nodes } = get();
     const node = nodes.find((n) => n.id === nodeId);
@@ -342,11 +337,11 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   onNodeClick: (node: NodeType) => {
+    console.log("Node clicked:", node);
     if (node.type !== NodeTypes.Table) return;
 
     const { nodes } = get();
     const keepSelect = !node.data.keepSelectOnMouseLeave;
-    console.log(pressedKeys);
     const multiSelect = pressedKeys.has("Shift");
 
     const newNodes = nodes.map((n) => {

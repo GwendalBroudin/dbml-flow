@@ -3,7 +3,12 @@ import useStore from "@/state/store";
 import { GroupNodeData, TableNodeData } from "@/types/nodes.types";
 import { Position, useUpdateNodeInternals } from "@xyflow/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { forwardRef, HTMLAttributes, useCallback } from "react";
+import {
+  forwardRef,
+  HTMLAttributes,
+  MouseEventHandler,
+  useCallback,
+} from "react";
 import { BaseNodeHeader } from "./base-node";
 import { HiddenHandle } from "./hidden-handle";
 
@@ -33,14 +38,18 @@ export const TableFoldHeader = forwardRef<
       afterTitle,
       ...props
     },
-    ref
+    ref,
   ) => {
     const { foldNode } = useStore();
     const updateNodeInternals = useUpdateNodeInternals();
-    const callback = useCallback(() => {
-      foldNode(id, !folded);
-      updateNodeInternals(id);
-    }, [foldNode, id, folded]);
+    const callback: MouseEventHandler = useCallback(
+      (evt) => {
+        evt.stopPropagation();
+        foldNode(id, !folded);
+        updateNodeInternals(id);
+      },
+      [foldNode, id, folded],
+    );
 
     const buttonProp = {
       onClick: callback,
@@ -67,7 +76,7 @@ export const TableFoldHeader = forwardRef<
           className={cn(
             "flex-auto pr-2",
             folded ? "rounded-sm" : "",
-            headerClassName
+            headerClassName,
           )}
           beforeTitle={foldButton}
           afterTitle={afterTitle}
@@ -76,5 +85,5 @@ export const TableFoldHeader = forwardRef<
         <HiddenHandle id={id} type="source" position={Position.Right} />
       </div>
     );
-  }
+  },
 );
