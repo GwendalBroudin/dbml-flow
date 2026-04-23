@@ -10,10 +10,10 @@ export const BaseNode = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative rounded-md border bg-card p-5 text-card-foreground",
+      "relative rounded-sm outline outline-transparent bg-card p-5 text-card-foreground",
       className,
-      selected ? "border-muted-foreground shadow-lg" : "",
-      "hover:ring-1",
+      selected && "outline-muted-foreground shadow-lg" ,
+      "hover:outline-card-foreground",
     )}
     tabIndex={0}
     {...props}
@@ -48,10 +48,13 @@ export const BaseNodeHeader = forwardRef<
     return (
       <div
         ref={ref}
-        className={cn("rounded-tl-sm rounded-tr-sm bg-secondary", className)}
+        className={cn(
+          "rounded-t-sm",
+          className,
+          selected ? "opacity-100" : "opacity-80",
+        )}
         style={{
           backgroundColor: headerColor,
-          opacity: selected ? 1 : 0.8,
           height: HEADER_HEIGHT,
         }}
         {...props}

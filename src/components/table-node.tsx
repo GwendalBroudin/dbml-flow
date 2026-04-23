@@ -50,16 +50,18 @@ function Header({
   id,
 }: Pick<NodeProps<TableNodeType>, "selected" | "data" | "id">) {
   const hasNote = !!data.table.note;
+  const sharedProps = {
+    id,
+    data,
+    selected,
+    headerColor: data.color,
+    label: data.label,
+    folded: data.folded,
+  };
   if (!hasNote) {
     return (
       <TableFoldHeader
-        id={id}
-        data={data}
-        selected={selected}
-        headerColor={data.color}
-        label={data.label}
-        folded={data.folded}
-        color={data.color}
+        {...sharedProps}
       />
     );
   }
@@ -70,13 +72,7 @@ function Header({
     <TableTooltip >
       <TableTooltipTrigger>
         <TableFoldHeader
-          id={id}
-          data={data}
-          selected={selected}
-          headerColor={data.color}
-          label={data.label}
-          folded={data.folded}
-          color={data.color}
+          {...sharedProps}
           afterTitle={noteIcon}
         >
           <TableTooltipContent>
@@ -115,7 +111,7 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
 
       <table
         className={cn(
-          "border-spacing-10 overflow-visible",
+          "border-spacing-10",
           data.folded ? "hidden" : "", // avoid this warning
           // Couldn't create edge for source handle id: "f-ecommerce.product_tags.id", edge id: 7. Help: https://reactflow.dev/error#008
         )}
