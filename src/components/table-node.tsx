@@ -4,7 +4,7 @@ import useStore from "@/state/store";
 import { InternalGroupNode, type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
-import { type NodeProps, useInternalNode } from "@xyflow/react";
+import { type NodeProps, useInternalNode, useUpdateNodeInternals } from "@xyflow/react";
 import { StickyNote } from "lucide-react";
 import { useCallback } from "react";
 import { BaseNode } from "./base-node";
@@ -59,22 +59,15 @@ function Header({
     folded: data.folded,
   };
   if (!hasNote) {
-    return (
-      <TableFoldHeader
-        {...sharedProps}
-      />
-    );
+    return <TableFoldHeader {...sharedProps} />;
   }
 
   const noteIcon = <StickyNote size="1rem" className="pl-1" />;
 
   return (
-    <TableTooltip >
+    <TableTooltip>
       <TableTooltipTrigger>
-        <TableFoldHeader
-          {...sharedProps}
-          afterTitle={noteIcon}
-        >
+        <TableFoldHeader {...sharedProps} afterTitle={noteIcon}>
           <TableTooltipContent>
             <TableHeaderTooltipView table={data.table} />
           </TableTooltipContent>
@@ -87,6 +80,7 @@ function Header({
 export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
   const { relationOnly, overrideRelationOnly, relationOnlyOverrides } =
     useStore();
+  const updateNodeInternals = useUpdateNodeInternals();
 
   const groupNode = data.groupId
     ? (useInternalNode(data.groupId) as InternalGroupNode)
@@ -96,6 +90,7 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
 
   const relationOnlyCallback = useCallback(() => {
     overrideRelationOnly(id, isRelationOnly);
+    updateNodeInternals(id);
   }, [id, isRelationOnly, overrideRelationOnly]);
 
   return (
@@ -122,7 +117,7 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
           )}
         </TableBody>
       </table>
-      {relationOnly && (
+      {relationOnly && !data.folded && (
         <div
           className="hover:bg-accent flex items-center justify-center cursor-pointer"
           onClick={relationOnlyCallback}
