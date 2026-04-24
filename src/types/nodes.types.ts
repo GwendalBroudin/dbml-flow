@@ -8,6 +8,10 @@ export type SharedNodeData = {
   color?: string;
   folded: boolean;
   hovered: boolean;
+  guessedDimensions?: {
+    width: number;
+    height: number;
+  };
 };
 
 export type TableNodeData = SharedNodeData & {

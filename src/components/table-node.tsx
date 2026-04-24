@@ -108,6 +108,9 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
       <BaseNode
         id={id}
         className="p-0 flex flex-col overflow-hidden"
+        style={{
+          width: data.guessedDimensions?.width,
+        }}
         selected={selected}
         hidden={hidden}
       >

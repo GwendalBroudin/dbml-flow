@@ -54,7 +54,7 @@ function mapToGroupNode(g: TableGroup, nodes: Map<string, TableNodeType>) {
 export function mapTableToNode(table: Table) {
   const tableId = getTableId(table);
 
-  const guessed = findClosestSize(table);
+  const guessedDimensions = findClosestSize(table);
   return <TableNodeType>{
     id: tableId,
     type: NodeTypes.Table,
@@ -65,9 +65,10 @@ export function mapTableToNode(table: Table) {
       groupId: table.group ? getGroupId(table.group) : undefined,
       color: table.headerColor,
       folded: false,
+      guessedDimensions,
     },
-    initialWidth: guessed.width,
-    initialHeight: guessed.height,
+    initialWidth: guessedDimensions.width,
+    initialHeight: guessedDimensions.height,
     position: { x: 0, y: 0 },
   };
 }
