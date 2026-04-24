@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 import React, {
   cloneElement,
   createContext,
-  forwardRef,
   HTMLAttributes,
+  Ref,
   useCallback,
   useEffect,
   useMemo,
@@ -25,10 +25,16 @@ type TooltipContextType = {
 const TooltipContext = createContext<TooltipContextType | null>(null);
 const TooltipPortalContext = createContext<HTMLElement | null>(null);
 
-export const TableTooltipAnchor = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ children, className, ...props }, ref) => {
+type TableTooltipAnchorProps = HTMLAttributes<HTMLDivElement> & {
+  ref?: Ref<HTMLDivElement>;
+};
+
+export const TableTooltipAnchor = ({
+  children,
+  className,
+  ref,
+  ...props
+}: TableTooltipAnchorProps) => {
   const [portalElement, setPortalElement] = useState<HTMLDivElement | null>(
     null,
   );
@@ -58,31 +64,36 @@ export const TableTooltipAnchor = forwardRef<
       </div>
     </TooltipPortalContext.Provider>
   );
-});
-TableTooltipAnchor.displayName = "TableTooltipAnchor";
+};
 
-export const TooltipAnchor = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ children, ...props }, ref) => {
+type TooltipAnchorProps = HTMLAttributes<HTMLDivElement> & {
+  ref?: Ref<HTMLDivElement>;
+};
+
+export const TooltipAnchor = ({ children, ref, ...props }: TooltipAnchorProps) => {
   return (
     <TableTooltipAnchor ref={ref} {...props}>
       {children}
     </TableTooltipAnchor>
   );
-});
-TooltipAnchor.displayName = "TooltipAnchor";
+};
 
 /* TOOLTIP NODE ------------------------------------------------------------- */
 
-export const TableTooltip = forwardRef<
-  HTMLElement,
-  HTMLAttributes<HTMLElement> & {
-    onFocus?: () => void;
-    onBlur?: () => void;
-    targetElement?: HTMLElement | null;
-  }
->(({ children, onFocus, onBlur, targetElement }, _ref) => {
+type TableTooltipProps = HTMLAttributes<HTMLElement> & {
+  onFocus?: () => void;
+  onBlur?: () => void;
+  targetElement?: HTMLElement | null;
+  ref?: Ref<HTMLElement>;
+};
+
+export const TableTooltip = ({
+  children,
+  onFocus,
+  onBlur,
+  targetElement,
+  ref: _ref,
+}: TableTooltipProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const portalElement = React.useContext(TooltipPortalContext);
@@ -140,8 +151,7 @@ export const TableTooltip = forwardRef<
       {children}
     </TooltipContext.Provider>
   );
-});
-TableTooltip.displayName = "TableTooltip";
+};
 
 /* TOOLTIP TRIGGER ---------------------------------------------------------- */
 export function TableTooltipTrigger({

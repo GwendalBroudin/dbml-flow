@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "migrating-from-forwardref": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "5b10fafab19df4992b57b77422ec529f76a32f6513d1146f1aae75008f912895"
+    }
+  }
+}

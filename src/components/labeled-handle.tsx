@@ -1,4 +1,4 @@
-import React, { forwardRef, HTMLAttributes } from "react";
+import React, { HTMLAttributes, Ref } from "react";
 import { cn } from "@/lib/utils";
 import { HandleProps } from "@xyflow/react";
 
@@ -11,33 +11,34 @@ const flexDirections = {
   left: "flex-row",
 };
 
-export const LabeledHandle = forwardRef<
-  HTMLDivElement,
-  HandleProps &
-    HTMLAttributes<HTMLDivElement> & {
-      title: string;
-      handleClassName?: string;
-      labelClassName?: string;
-    }
->(
-  (
-    { className, labelClassName, handleClassName, title, position, ...props },
-    ref,
-  ) => (
-    <div
-      ref={ref}
-      className={cn(
-        "relative flex items-center",
-        flexDirections[position],
-        className,
-      )}
-    >
-      <HiddenHandle position={position} className={handleClassName} {...props} />
-      <label className={cn("px-3 text-foreground", labelClassName)}>
-        {title}
-      </label>
-    </div>
-  ),
-);
+type LabeledHandleProps = HandleProps &
+  HTMLAttributes<HTMLDivElement> & {
+    title: string;
+    handleClassName?: string;
+    labelClassName?: string;
+    ref?: Ref<HTMLDivElement>;
+  };
 
-LabeledHandle.displayName = "LabeledHandle";
+export const LabeledHandle = ({
+  className,
+  labelClassName,
+  handleClassName,
+  title,
+  position,
+  ref,
+  ...props
+}: LabeledHandleProps) => (
+  <div
+    ref={ref}
+    className={cn(
+      "relative flex items-center",
+      flexDirections[position],
+      className,
+    )}
+  >
+    <HiddenHandle position={position} className={handleClassName} {...props} />
+    <label className={cn("px-3 text-foreground", labelClassName)}>
+      {title}
+    </label>
+  </div>
+);
