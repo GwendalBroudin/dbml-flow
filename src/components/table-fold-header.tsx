@@ -75,7 +75,6 @@ export const TableFoldHeader = forwardRef<
           selected={selected}
           className={cn(
             "flex-auto pr-2",
-            folded ? "rounded-sm" : "",
             headerClassName,
           )}
           beforeTitle={foldButton}

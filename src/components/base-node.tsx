@@ -10,7 +10,7 @@ export const BaseNode = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative rounded-sm outline outline-transparent bg-card p-5 text-card-foreground",
+      "relative rounded-xs outline outline-transparent bg-card p-5 text-card-foreground",
       className,
       selected && "outline-muted-foreground shadow-lg" ,
       "hover:outline-card-foreground",
@@ -49,7 +49,6 @@ export const BaseNodeHeader = forwardRef<
       <div
         ref={ref}
         className={cn(
-          "rounded-t-sm",
           className,
           selected ? "opacity-100" : "opacity-80",
         )}

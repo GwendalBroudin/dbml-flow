@@ -4,7 +4,11 @@ import useStore from "@/state/store";
 import { InternalGroupNode, type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
-import { type NodeProps, useInternalNode, useUpdateNodeInternals } from "@xyflow/react";
+import {
+  type NodeProps,
+  useInternalNode,
+  useUpdateNodeInternals,
+} from "@xyflow/react";
 import { StickyNote } from "lucide-react";
 import { useCallback } from "react";
 import { BaseNode } from "./base-node";
@@ -14,6 +18,7 @@ import { TableFieldTooltipView } from "./table-tooltip/table-field-tooltip-view"
 import { TableHeaderTooltipView } from "./table-tooltip/table-header-tooltip-view";
 import {
   TableTooltip,
+  TableTooltipAnchor,
   TableTooltipContent,
   TableTooltipTrigger,
 } from "./table-tooltip/table-tooltip";
@@ -34,12 +39,15 @@ function buildField(field: Field, table: Table, isRelationOnly: boolean) {
   return (
     <TableTooltip key={field.name}>
       <TableTooltipTrigger>
-        <TableField field={field} table={table} isRelationOnly={isRelationOnly}>
-          <TableTooltipContent>
-            <TableFieldTooltipView field={field} />
-          </TableTooltipContent>
-        </TableField>
+        <TableField
+          field={field}
+          table={table}
+          isRelationOnly={isRelationOnly}
+        ></TableField>
       </TableTooltipTrigger>
+      <TableTooltipContent>
+        <TableFieldTooltipView field={field} />
+      </TableTooltipContent>
     </TableTooltip>
   );
 }
@@ -67,12 +75,14 @@ function Header({
   return (
     <TableTooltip>
       <TableTooltipTrigger>
-        <TableFoldHeader {...sharedProps} afterTitle={noteIcon}>
-          <TableTooltipContent>
-            <TableHeaderTooltipView table={data.table} />
-          </TableTooltipContent>
-        </TableFoldHeader>
+        <TableFoldHeader
+          {...sharedProps}
+          afterTitle={noteIcon}
+        ></TableFoldHeader>
       </TableTooltipTrigger>
+      <TableTooltipContent>
+        <TableHeaderTooltipView table={data.table} />
+      </TableTooltipContent>
     </TableTooltip>
   );
 }
@@ -94,40 +104,42 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
   }, [id, isRelationOnly, overrideRelationOnly]);
 
   return (
-    <BaseNode
-      id={id}
-      className="p-0 flex flex-col"
-      selected={selected}
-      hidden={hidden}
-    >
-      <Header selected={selected} data={data} id={id} />
-
-      {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
-
-      <table
-        className={cn(
-          "border-spacing-10",
-          data.folded ? "hidden" : "", // avoid this warning
-          // Couldn't create edge for source handle id: "f-ecommerce.product_tags.id", edge id: 7. Help: https://reactflow.dev/error#008
-        )}
+    <TableTooltipAnchor>
+      <BaseNode
+        id={id}
+        className="p-0 flex flex-col overflow-hidden"
+        selected={selected}
+        hidden={hidden}
       >
-        <TableBody>
-          {data.table.fields.map((field) =>
-            buildField(field, data.table, isRelationOnly),
+        <Header selected={selected} data={data} id={id} />
+
+        {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
+
+        <table
+          className={cn(
+            "border-spacing-10",
+            data.folded ? "hidden" : "", // avoid this warning
+            // Couldn't create edge for source handle id: "f-ecommerce.product_tags.id", edge id: 7. Help: https://reactflow.dev/error#008
           )}
-        </TableBody>
-      </table>
-      {relationOnly && !data.folded && (
-        <div
-          className="hover:bg-accent flex items-center justify-center cursor-pointer"
-          onClick={relationOnlyCallback}
-          title={
-            isRelationOnly ? "Show all fields" : "Show only relations fields"
-          }
         >
-          <p>...</p>
-        </div>
-      )}
-    </BaseNode>
+          <TableBody>
+            {data.table.fields.map((field) =>
+              buildField(field, data.table, isRelationOnly),
+            )}
+          </TableBody>
+        </table>
+        {relationOnly && !data.folded && (
+          <div
+            className="hover:bg-accent flex items-center justify-center cursor-pointer"
+            onClick={relationOnlyCallback}
+            title={
+              isRelationOnly ? "Show all fields" : "Show only relations fields"
+            }
+          >
+            <p>...</p>
+          </div>
+        )}
+      </BaseNode>
+    </TableTooltipAnchor>
   );
 };
