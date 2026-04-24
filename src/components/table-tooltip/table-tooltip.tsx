@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -216,11 +217,14 @@ export function TableTooltipContent({
     tooltipContext;
 
   const [position, setPosition] = useState({ top: 0, left: 0, height: 0 });
+  const lastPositionRef = useRef(position);
 
   useEffect(() => {
-    if (!anchorElement || !targetElement) {
+    if (!anchorElement || !targetElement || (!isVisible && !forceVisible)) {
       return;
     }
+
+    let animationFrameId = 0;
 
     const updatePosition = () => {
       const triggerRect = anchorElement.getBoundingClientRect();
@@ -234,7 +238,7 @@ export function TableTooltipContent({
           ? targetRect.height / targetElement.offsetHeight
           : 1;
 
-      setPosition({
+      const nextPosition = {
         top:
           (triggerRect.top - targetRect.top + targetElement.scrollTop) /
           (scaleY || 1),
@@ -242,19 +246,41 @@ export function TableTooltipContent({
           (triggerRect.right - targetRect.left + targetElement.scrollLeft) /
           (scaleX || 1),
         height: triggerRect.height / (scaleY || 1),
-      });
+      };
+
+      const prevPosition = lastPositionRef.current;
+      if (
+        prevPosition.top !== nextPosition.top ||
+        prevPosition.left !== nextPosition.left ||
+        prevPosition.height !== nextPosition.height
+      ) {
+        lastPositionRef.current = nextPosition;
+        setPosition(nextPosition);
+      }
+    };
+
+    const trackPosition = () => {
+      updatePosition();
+      animationFrameId = window.requestAnimationFrame(trackPosition);
     };
 
     updatePosition();
-
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
 
+    const resizeObserver = new ResizeObserver(updatePosition);
+    resizeObserver.observe(anchorElement);
+    resizeObserver.observe(targetElement);
+
+    animationFrameId = window.requestAnimationFrame(trackPosition);
+
     return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [anchorElement, targetElement]);
+  }, [anchorElement, forceVisible, isVisible, targetElement]);
 
   if (!isVisible && !forceVisible) {
     return null;
