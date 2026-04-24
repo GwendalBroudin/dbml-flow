@@ -133,7 +133,7 @@ const useStore = create<AppState>((set, get) => ({
   relationOnlyOverrides: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
-  saveCodeInUrl: false,
+  saveCodeInUrl: true,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
