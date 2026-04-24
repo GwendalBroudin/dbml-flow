@@ -15,8 +15,8 @@
 
 ## Notes 
 - [ ] Floating Notes 
-- [ ] Table Notes
-- [ ] Field Notes
+- [x] Table Notes
+- [x] Field Notes
 
 ## Editor 
 - [ ] Color picker
@@ -33,7 +33,7 @@
 
 ## Bugs / to investigate
 - [ ] Function getTextWidth() returns wrong value on startup (8 instead of 7)
-- [ ] Scroll missing on editor
+- [ ] Scroll bar missing on editor
 - [ ] Could group size and bounds be calculated inside component instead of state store ?
 
 # Sources 
