@@ -10,10 +10,10 @@ export const BaseNode = forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative rounded-md border bg-card p-5 text-card-foreground",
+      "relative rounded-xs outline outline-transparent bg-card p-5 text-card-foreground",
       className,
-      selected ? "border-muted-foreground shadow-lg" : "",
-      "hover:ring-1"
+      selected && "outline-muted-foreground shadow-lg" ,
+      "hover:outline-card-foreground",
     )}
     tabIndex={0}
     {...props}
@@ -29,28 +29,43 @@ export const BaseNodeHeader = forwardRef<
     headerColor?: string;
     label: string;
     beforeTitle?: React.ReactNode;
+    afterTitle?: React.ReactNode;
   }
->(({ className, selected, headerColor, label, beforeTitle, ...props }, ref) => {
-  headerColor = headerColor || "var(--color-primary)";
-  return (
-    <div
-      ref={ref}
-      className={cn("rounded-tl-sm rounded-tr-sm bg-secondary", className)}
-      style={{
-        backgroundColor: headerColor,
-        opacity: selected ? 1 : 0.8,
-        height: HEADER_HEIGHT,
-      }}
-      {...props}
-    >
-      <div className="p-1 pl-2 flex items-center gap-1 mix-blend-luminosity filter-invert">
-        {beforeTitle}
-        <h2 className="font-semibold text-[15px] ">
-          {label}
-        </h2>
+>(
+  (
+    {
+      className,
+      selected,
+      headerColor,
+      label,
+      beforeTitle,
+      afterTitle,
+      ...props
+    },
+    ref,
+  ) => {
+    headerColor = headerColor || "var(--color-primary)";
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          className,
+          selected ? "opacity-100" : "opacity-80",
+        )}
+        style={{
+          backgroundColor: headerColor,
+          height: HEADER_HEIGHT,
+        }}
+        {...props}
+      >
+        <div className="p-1 pl-2 flex items-center gap-1 mix-blend-luminosity filter-invert">
+          {beforeTitle}
+          <h2 className="font-semibold text-[15px] ">{label}</h2>
+          {afterTitle}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 BaseNodeHeader.displayName = "BaseNodeHeader";

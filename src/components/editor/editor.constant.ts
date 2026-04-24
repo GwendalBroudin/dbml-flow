@@ -32,7 +32,7 @@ export const StartupCode = `
 
 // Creating tables
 // You can define the tables with full schema names
-Table ecommerce.merchants [headercolor: #1E90FF] {
+Table ecommerce.merchants [headercolor: #1E90FF, note: 'This is the merchants table'] {
   id int
   country_code int
   merchant_name varchar

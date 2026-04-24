@@ -26,7 +26,6 @@ export const LabeledHandle = forwardRef<
   ) => (
     <div
       ref={ref}
-      title={title}
       className={cn(
         "relative flex items-center",
         flexDirections[position],

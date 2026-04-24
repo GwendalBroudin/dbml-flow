@@ -1,14 +1,13 @@
-import type { GroupNodeType, TableNodeType } from "@/types/nodes.types";
-import type { NodeProps } from "@xyflow/react";
-import { BaseNode, BaseNodeHeader } from "./base-node";
-import { TableFoldHeader } from "./table-fold-header";
 import { cn } from "@/lib/utils";
+import type { GroupNodeType } from "@/types/nodes.types";
+import type { NodeProps } from "@xyflow/react";
+import { BaseNode } from "./base-node";
+import { TableFoldHeader } from "./table-fold-header";
 
 export const TableGroupNode = ({
   selected,
   data,
-  id,
-  width,
+  id
 }: NodeProps<GroupNodeType>) => {
   return (
     <BaseNode

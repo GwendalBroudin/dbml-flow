@@ -33,6 +33,7 @@ import {
   computeRelatedGroupChanges,
   getBoundedGroups,
 } from "@/lib/flow/groups.helpers";
+import { replaceNodeData } from "@/lib/flow/nodes.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
@@ -42,7 +43,6 @@ import Database from "@dbml/core/types/model_structure/database";
 import { CompilerError } from "@dbml/core/types/parse/error";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
-import { replaceNodeData } from "@/lib/flow/nodes.helpers";
 
 // Helper type for parse results
 type ParseResult =
@@ -92,6 +92,8 @@ export type AppState = {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   onChange: (selected: OnSelectionChangeParams<NodeType, Edge>) => void;
+  onNodeMouseEnter: (node: NodeType) => void;
+  onNodeMouseLeave: (node: NodeType) => void;
   foldNode: (nodeId: string, fold: boolean) => void;
   setRelationOnly: (value: boolean) => void;
   overrideRelationOnly: (nodeId: string, value: boolean) => void;
@@ -106,12 +108,12 @@ const setPositionsInCodeDebounced = debounce(
   (
     code: string,
     savedPositions: NodePositionIndex,
-    setCode: (code: string) => void
+    setCode: (code: string) => void,
   ) => {
     const newCode = setPositionsInCode(code, savedPositions);
     setCode(newCode);
   },
-  debounceTime
+  debounceTime,
 );
 
 // this is our useStore hook that we can use in our components to get parts of the store and call actions
@@ -131,7 +133,7 @@ const useStore = create<AppState>((set, get) => ({
   relationOnlyOverrides: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
-  saveCodeInUrl: false,
+  saveCodeInUrl: true,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
@@ -183,7 +185,7 @@ const useStore = create<AppState>((set, get) => ({
 
     const oldTableNode = get().nodes.filter((n) => n.type === NodeTypes.Table);
     const oldGroupNodes = get().nodes.filter(
-      (n) => n.type === NodeTypes.TableGroup
+      (n) => n.type === NodeTypes.TableGroup,
     );
 
     // Get initial layout
@@ -246,7 +248,7 @@ const useStore = create<AppState>((set, get) => ({
     const newNodes = replaceNodeData(nodes, node, nodeId, {
       folded: fold,
     });
-
+    
     const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
 
     set({ foldedIds: newFoldedIds, nodes: newNodes, edges });
@@ -301,7 +303,7 @@ const useStore = create<AppState>((set, get) => ({
 
     const edgesRelativeData = computeEdgesRelativeData(
       toMapId<string, NodeType>(newNodes),
-      get().edges
+      get().edges,
     );
 
     get().setSavedPositions(newNodes);
@@ -324,11 +326,31 @@ const useStore = create<AppState>((set, get) => ({
     const edgesAnimated = get().edges.map((edge) => ({
       ...edge,
       animated: selected.nodes.some(
-        (n) => n.id === edge.source || n.id === edge.target
+        (n) => n.id === edge.source || n.id === edge.target,
       ),
     }));
 
     set({ edges: edgesAnimated });
+  },
+
+  onNodeMouseEnter: (node: NodeType) => {
+    node.data.hovered = true;
+
+    //fix popup under other selected nodes when hovering a table node
+    if (node.type === NodeTypes.Table) {
+      document
+        .querySelector(`[data-id="${node.id}"]`)
+        ?.classList.add("z-2000!");
+    }
+  },
+
+  onNodeMouseLeave: (node: NodeType) => {
+    node.data.hovered = false;
+    if (node.type === NodeTypes.Table) {
+      document
+        .querySelector(`[data-id="${node.id}"]`)
+        ?.classList.remove("z-2000!");
+    }
   },
 
   // Layout management

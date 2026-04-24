@@ -5,7 +5,7 @@ export const FIELD_HEIGHT = 24 as const;
 export const FIELD_BORDER = 1 as const;
 export const FIELD_HEIGHT_TOTAL = FIELD_HEIGHT + FIELD_BORDER;
 
-export const PRIMARY_KEY_WIDTH = 17 as const;
+export const ICON_SIZE = 11 as const;
 export const FIELD_SPACING = 12 as const;
 
 export const GROUP_PADDING = 10 as const;

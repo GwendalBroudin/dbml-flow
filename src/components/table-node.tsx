@@ -1,83 +1,96 @@
-import { getFieldId } from "@/lib/dbml/node-dmbl.parser";
+import { hasFieldDetails } from "@/lib/dbml/dbml.utils";
 import { cn } from "@/lib/utils";
+import useStore from "@/state/store";
 import { InternalGroupNode, type TableNodeType } from "@/types/nodes.types";
 import Field from "@dbml/core/types/model_structure/field";
 import Table from "@dbml/core/types/model_structure/table";
-import { type NodeProps, Position, useInternalNode } from "@xyflow/react";
-import { KeyRound } from "lucide-react";
-import { BaseNode } from "./base-node";
-import { LabeledHandle } from "./labeled-handle";
 import {
-  FIELD_HEIGHT,
-  FIELD_SPACING,
-  PRIMARY_KEY_WIDTH,
-} from "./table-constants";
-import { TableFoldHeader } from "./table-fold-header";
-import { TableBody, TableCell, TableRow } from "./ui/table";
-import useStore from "@/state/store";
+  type NodeProps,
+  useInternalNode,
+  useUpdateNodeInternals,
+} from "@xyflow/react";
+import { StickyNote } from "lucide-react";
 import { useCallback } from "react";
+import { BaseNode } from "./base-node";
+import { TableFoldHeader } from "./table-fold-header";
+import { TableField } from "./table-node-field";
+import { TableFieldTooltipView } from "./table-tooltip/table-field-tooltip-view";
+import { TableHeaderTooltipView } from "./table-tooltip/table-header-tooltip-view";
+import {
+  TableTooltip,
+  TableTooltipAnchor,
+  TableTooltipContent,
+  TableTooltipTrigger,
+} from "./table-tooltip/table-tooltip";
+import { TableBody } from "./ui/table";
 
-function TableField(field: Field, table: Table, fieldOnly: boolean) {
-  const indexes = table.indexes.filter((i) =>
-    i.columns.some((c) => c.value === field.name)
-  );
-  const pk = field.pk || indexes.some((i) => i.pk);
-  const unique = pk || field.unique || indexes.some((i) => i.unique);
-
-  const attribute = pk ? <KeyRound size="0.7rem" /> : null;
-  const hidden = fieldOnly && !field.endpoints.some((e) => e.ref);
+function buildField(field: Field, table: Table, isRelationOnly: boolean) {
+  const hasDetails = hasFieldDetails(field);
+  if (!hasDetails)
+    return (
+      <TableField
+        key={field.name}
+        field={field}
+        table={table}
+        isRelationOnly={isRelationOnly}
+      />
+    );
 
   return (
-    <TableRow
-      hidden={hidden}
-      key={field.name}
-      className="relative text-sm"
-      style={{
-        height: FIELD_HEIGHT,
-        // borderBottomWidth: FIELD_BORDER, // handled by TableRow
-        overflow: "hidden",
-      }}
-    >
-      <TableCell
-        className={cn(
-          "py-0.5 pl-0 flex items-center",
-          unique ? "font-semibold" : "font-normal"
-        )}
-        style={{
-          paddingRight: FIELD_SPACING,
-        }}
-      >
-        <LabeledHandle
-          id={getFieldId(field)}
-          title={field.name}
-          type="target"
-          position={Position.Left}
-          className="bold"
-          labelClassName="p-0 pl-2"
-        />
-        <div style={{ width: PRIMARY_KEY_WIDTH }} className="flex justify-end">
-          {attribute}
-        </div>
-      </TableCell>
+    <TableTooltip key={field.name}>
+      <TableTooltipTrigger>
+        <TableField
+          field={field}
+          table={table}
+          isRelationOnly={isRelationOnly}
+        ></TableField>
+      </TableTooltipTrigger>
+      <TableTooltipContent>
+        <TableFieldTooltipView field={field} />
+      </TableTooltipContent>
+    </TableTooltip>
+  );
+}
 
-      <TableCell className="py-0.5 px-0 text-right font-light">
-        <LabeledHandle
-          id={getFieldId(field)}
-          title={field.type.type_name}
-          type="source"
-          position={Position.Right}
-          className="p-0"
-          handleClassName="p-0"
-          labelClassName="p-0 pr-2"
-        />
-      </TableCell>
-    </TableRow>
+function Header({
+  selected,
+  data,
+  id,
+}: Pick<NodeProps<TableNodeType>, "selected" | "data" | "id">) {
+  const hasNote = !!data.table.note;
+  const sharedProps = {
+    id,
+    data,
+    selected,
+    headerColor: data.color,
+    label: data.label,
+    folded: data.folded,
+  };
+  if (!hasNote) {
+    return <TableFoldHeader {...sharedProps} />;
+  }
+
+  const noteIcon = <StickyNote size="1rem" className="pl-1" />;
+
+  return (
+    <TableTooltip>
+      <TableTooltipTrigger>
+        <TableFoldHeader
+          {...sharedProps}
+          afterTitle={noteIcon}
+        ></TableFoldHeader>
+      </TableTooltipTrigger>
+      <TableTooltipContent>
+        <TableHeaderTooltipView table={data.table} />
+      </TableTooltipContent>
+    </TableTooltip>
   );
 }
 
 export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
   const { relationOnly, overrideRelationOnly, relationOnlyOverrides } =
     useStore();
+  const updateNodeInternals = useUpdateNodeInternals();
 
   const groupNode = data.groupId
     ? (useInternalNode(data.groupId) as InternalGroupNode)
@@ -87,49 +100,49 @@ export const TableNode = ({ selected, data, id }: NodeProps<TableNodeType>) => {
 
   const relationOnlyCallback = useCallback(() => {
     overrideRelationOnly(id, isRelationOnly);
+    updateNodeInternals(id);
   }, [id, isRelationOnly, overrideRelationOnly]);
 
   return (
-    <BaseNode
-      id={id}
-      className="p-0 flex flex-col overflow-hidden"
-      selected={selected}
-      hidden={hidden}
-    >
-      <TableFoldHeader
+    <TableTooltipAnchor>
+      <BaseNode
         id={id}
-        data={data}
+        className="p-0 flex flex-col overflow-hidden"
+        style={{
+          width: data.guessedDimensions?.width,
+        }}
         selected={selected}
-        headerColor={data.color}
-        label={data.label}
-        folded={data.folded}
-        color={data.color}
-      />
-
-      {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
-
-      <table
-        className={cn(
-          "border-spacing-10 overflow-visible",
-          data.folded ? "hidden" : "" // avoid this warning
-          // Couldn't create edge for source handle id: "f-ecommerce.product_tags.id", edge id: 7. Help: https://reactflow.dev/error#008
-        )}
+        hidden={hidden}
       >
-        <TableBody>
-          {data.table.fields.map((field) =>
-            TableField(field, data.table, isRelationOnly)
+        <Header selected={selected} data={data} id={id} />
+
+        {/* shadcn Table cannot be used because of hardcoded overflow-auto */}
+
+        <table
+          className={cn(
+            "border-spacing-10",
+            data.folded ? "hidden" : "", // avoid this warning
+            // Couldn't create edge for source handle id: "f-ecommerce.product_tags.id", edge id: 7. Help: https://reactflow.dev/error#008
           )}
-        </TableBody>
-      </table>
-      {relationOnly && (
-        <div
-          className="hover:bg-accent flex items-center justify-center cursor-pointer"
-          onClick={relationOnlyCallback}
-          title={isRelationOnly ? "Show all fields" : "Show only relations fields"}
         >
-          <p>...</p>
-        </div>
-      )}
-    </BaseNode>
+          <TableBody>
+            {data.table.fields.map((field) =>
+              buildField(field, data.table, isRelationOnly),
+            )}
+          </TableBody>
+        </table>
+        {relationOnly && !data.folded && (
+          <div
+            className="hover:bg-accent flex items-center justify-center cursor-pointer"
+            onClick={relationOnlyCallback}
+            title={
+              isRelationOnly ? "Show all fields" : "Show only relations fields"
+            }
+          >
+            <p>...</p>
+          </div>
+        )}
+      </BaseNode>
+    </TableTooltipAnchor>
   );
 };

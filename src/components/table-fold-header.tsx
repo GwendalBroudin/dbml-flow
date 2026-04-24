@@ -3,7 +3,12 @@ import useStore from "@/state/store";
 import { GroupNodeData, TableNodeData } from "@/types/nodes.types";
 import { Position, useUpdateNodeInternals } from "@xyflow/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { forwardRef, HTMLAttributes, useCallback } from "react";
+import {
+  forwardRef,
+  HTMLAttributes,
+  MouseEventHandler,
+  useCallback,
+} from "react";
 import { BaseNodeHeader } from "./base-node";
 import { HiddenHandle } from "./hidden-handle";
 
@@ -17,6 +22,7 @@ export const TableFoldHeader = forwardRef<
     folded?: boolean;
     headerClassName?: string;
     data: TableNodeData | GroupNodeData;
+    afterTitle?: React.ReactNode;
   }
 >(
   (
@@ -29,16 +35,21 @@ export const TableFoldHeader = forwardRef<
       label,
       headerClassName,
       data,
+      afterTitle,
       ...props
     },
-    ref
+    ref,
   ) => {
     const { foldNode } = useStore();
     const updateNodeInternals = useUpdateNodeInternals();
-    const callback = useCallback(() => {
-      foldNode(id, !folded);
-      updateNodeInternals(id);
-    }, [foldNode, id, folded]);
+    const callback: MouseEventHandler = useCallback(
+      (evt) => {
+        evt.stopPropagation();
+        foldNode(id, !folded);
+        updateNodeInternals(id);
+      },
+      [foldNode, id, folded],
+    );
 
     const buttonProp = {
       onClick: callback,
@@ -62,15 +73,13 @@ export const TableFoldHeader = forwardRef<
           headerColor={headerColor}
           label={label}
           selected={selected}
-          className={cn(
-            "flex-auto pr-2",
-            folded ? "rounded-sm" : "",
-            headerClassName
-          )}
+          className={cn("flex-auto pr-2", headerClassName)}
           beforeTitle={foldButton}
+          afterTitle={afterTitle}
         />
+        {props.children}
         <HiddenHandle id={id} type="source" position={Position.Right} />
       </div>
     );
-  }
+  },
 );
