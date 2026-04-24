@@ -68,8 +68,6 @@ export function mapTableToNode(table: Table) {
     },
     initialWidth: guessed.width,
     initialHeight: guessed.height,
-    width: guessed.width,
-    height: guessed.height,
     position: { x: 0, y: 0 },
   };
 }

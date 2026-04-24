@@ -33,6 +33,7 @@ import {
   computeRelatedGroupChanges,
   getBoundedGroups,
 } from "@/lib/flow/groups.helpers";
+import { replaceNodeData } from "@/lib/flow/nodes.helpers";
 import { getLayoutedGraph } from "@/lib/layout/dagre.utils";
 import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
@@ -42,8 +43,6 @@ import Database from "@dbml/core/types/model_structure/database";
 import { CompilerError } from "@dbml/core/types/parse/error";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
-import { replaceNodeData } from "@/lib/flow/nodes.helpers";
-import { pressedKeys } from "@/lib/input/key.utils";
 
 // Helper type for parse results
 type ParseResult =
@@ -134,7 +133,7 @@ const useStore = create<AppState>((set, get) => ({
   relationOnlyOverrides: new Set<string>(),
   minimap: false,
   savePositionsInCode: true,
-  saveCodeInUrl: false,
+  saveCodeInUrl: true,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
 
@@ -249,7 +248,7 @@ const useStore = create<AppState>((set, get) => ({
     const newNodes = replaceNodeData(nodes, node, nodeId, {
       folded: fold,
     });
-
+    
     const edges = mapDatabaseToEdges(get().database!, newFoldedIds);
 
     set({ foldedIds: newFoldedIds, nodes: newNodes, edges });

@@ -73,10 +73,7 @@ export const TableFoldHeader = forwardRef<
           headerColor={headerColor}
           label={label}
           selected={selected}
-          className={cn(
-            "flex-auto pr-2",
-            headerClassName,
-          )}
+          className={cn("flex-auto pr-2", headerClassName)}
           beforeTitle={foldButton}
           afterTitle={afterTitle}
         />
