@@ -223,6 +223,10 @@ body {
   filter: invert(1);
 }
 
+.resizable-overflow-visible{
+  overflow: visible !important;
+}
+
 /* Hide Monaco color picker alpha strip in the DBML editor. */
 .dbml-editor .colorpicker-body .opacity-strip {
   display: none;

@@ -14,15 +14,18 @@ export function EditRoute() {
     <div className="flex flex-col h-screen">
       <nav className="bg-primary">
         <Link className="text-mist-200" to={"view" + location.search}>
-          {" "}
           Viewer
         </Link>
       </nav>
-      <ResizablePanelGroup
-        orientation="horizontal"
-      >
-        <ResizablePanel defaultSize="30%" className="min-w-1/5 max-w-1/2">
-          <DBMLEditor />
+      <ResizablePanelGroup orientation="horizontal">
+        <ResizablePanel
+          defaultSize="30%"
+          collapsible={true}
+          minSize="15%"
+          maxSize="50%"
+          className="resizable-overflow-visible"
+        >
+            <DBMLEditor />
         </ResizablePanel>
 
         <ResizableHandle withHandle={true} />

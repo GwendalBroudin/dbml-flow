@@ -1,12 +1,13 @@
+import { initDbmlFetaures } from "@/lib/monaco/init-dbml-feature";
 import { Editor, OnMount } from "@monaco-editor/react";
 import * as _ from "lodash-es";
 import React, { useCallback, useEffect } from "react";
 import { EDITOR_CONFIG, EDITOR_OPTIONS } from "./editor.constant";
-import { initDbmlFetaures } from "@/lib/monaco/init-dbml-feature";
 
+import { cn } from "@/lib/utils";
 import useStore from "@/state/store";
 
-const DBMLEditor: React.FC = () => {
+const DBMLEditor: React.FC<{ className?: string }> = ({ className }) => {
   const {
     code,
     globalError,
@@ -24,7 +25,7 @@ const DBMLEditor: React.FC = () => {
       editor.onDidFocusEditorText(() => setEditorTextFocus(true));
       editor.onDidBlurEditorText(() => setEditorTextFocus(false));
     },
-    [setEditorModel, setEditorTextFocus]
+    [setEditorModel, setEditorTextFocus],
   );
 
   // Code change handler with debounce
@@ -34,7 +35,7 @@ const DBMLEditor: React.FC = () => {
       setCode(updatedCode);
       parseDBML(updatedCode);
     }, EDITOR_CONFIG.BUILD_DELAY),
-    [parseDBML, setCode]
+    [parseDBML, setCode],
   );
 
   // Cleanup debounced function on unmount
@@ -45,17 +46,18 @@ const DBMLEditor: React.FC = () => {
   }, [handleCodeChange]);
 
   return (
-    <div className="dbml-editor flex flex-col h-full">
+    <div className={cn("dbml-editor flex flex-col h-full", className)}>
       <GlobalErrorMessage error={globalError} />
-      <Editor
-        onMount={handleEditorMount}
-        onChange={handleCodeChange}
-        defaultLanguage={EDITOR_CONFIG.LANGUAGE}
-        value={code}
-        theme={EDITOR_CONFIG.THEME}
-        className="flex-1"
-        options={EDITOR_OPTIONS}
-      />
+      <div className="flex-1 min-h-0">
+        <Editor
+          onMount={handleEditorMount}
+          onChange={handleCodeChange}
+          defaultLanguage={EDITOR_CONFIG.LANGUAGE}
+          value={code}
+          theme={EDITOR_CONFIG.THEME}
+          options={EDITOR_OPTIONS}
+        />
+      </div>
     </div>
   );
 };
