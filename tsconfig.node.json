@@ -1,12 +1,10 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
     "composite": true,
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "module": "nodenext",
     "allowSyntheticDefaultImports": true,
     "types": [
       "node"

@@ -39,8 +39,7 @@ import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { toMapId } from "@/lib/utils";
 import { NodePositionIndex, NodeType, NodeTypes } from "@/types/nodes.types";
-import Database from "@dbml/core/types/model_structure/database";
-import { CompilerError } from "@dbml/core/types/parse/error";
+import type { CompilerError, Database } from "@dbml/core";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
 

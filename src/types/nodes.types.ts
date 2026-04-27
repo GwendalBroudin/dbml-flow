@@ -1,6 +1,5 @@
 import { NodeBounds } from "@/lib/math/math.helper";
-import Ref from "@dbml/core/types/model_structure/ref";
-import type Table from "@dbml/core/types/model_structure/table";
+import type { Ref, Table } from "@dbml/core";
 import { Edge, InternalNode, type Node } from "@xyflow/react";
 
 export type SharedNodeData = {

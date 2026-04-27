@@ -1,5 +1,5 @@
 import { Monaco } from "@monaco-editor/react";
-import { editor } from "monaco-editor";
+import { editor, languages } from "monaco-editor";
 import { parser } from "../dbml/node-dmbl.parser";
 
 let hasRegisteredDbmlFeatures = false;
@@ -29,10 +29,10 @@ export const initDbmlFetaures = (
   monaco.languages.registerReferenceProvider("dbml", referenceProvider);
 
   monaco.languages.registerColorProvider("dbml", {
-    provideDocumentColors(model) {
-      const colorMatches = Array.from(
-        model.getValue().matchAll(/#[A-Fa-f0-9]{6}(?:[A-Fa-f0-9]{2})?/g)
-      );
+    provideDocumentColors(model: editor.ITextModel) {
+      const colorMatches = [
+        ...model.getValue().matchAll(/#[A-Fa-f0-9]{6}(?:[A-Fa-f0-9]{2})?/g),
+      ] as RegExpMatchArray[];
 
       return colorMatches.map((match) => {
         const matchText = match[0];
@@ -56,7 +56,10 @@ export const initDbmlFetaures = (
         };
       });
     },
-    provideColorPresentations(_model, colorInfo) {
+    provideColorPresentations(
+      _model: editor.ITextModel,
+      colorInfo: languages.IColorInformation
+    ) {
       const { red, green, blue } = colorInfo.color;
       const hexColor = `#${toHexByte(red)}${toHexByte(green)}${toHexByte(blue)}`;
 

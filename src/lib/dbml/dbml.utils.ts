@@ -1,4 +1,4 @@
-import Field from "@dbml/core/types/model_structure/field";
+import type { Field } from "@dbml/core";
 
 export function hasFieldDetails(field: Field) {
   return !!(

@@ -1,8 +1,7 @@
 import { hasFieldDetails, isUniqueFieldOrPK } from "@/lib/dbml/dbml.utils";
 import { getFieldId } from "@/lib/dbml/node-dmbl.parser";
 import { cn } from "@/lib/utils";
-import Field from "@dbml/core/types/model_structure/field";
-import Table from "@dbml/core/types/model_structure/table";
+import type { Field, Table } from "@dbml/core";
 import { KeyRound, StickyNote } from "lucide-react";
 import { LabeledHandle } from "./labeled-handle";
 import { ICON_SIZE, FIELD_HEIGHT, FIELD_SPACING } from "./table-constants";

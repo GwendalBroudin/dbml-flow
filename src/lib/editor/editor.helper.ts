@@ -1,7 +1,7 @@
 import type {
   CompilerDiagnostic,
   CompilerError,
-} from "@dbml/core/types/parse/error";
+} from "@dbml/core";
 
 import * as monaco from "monaco-editor";
 

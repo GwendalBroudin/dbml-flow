@@ -2,8 +2,7 @@ import { hasFieldDetails } from "@/lib/dbml/dbml.utils";
 import { cn } from "@/lib/utils";
 import useStore from "@/state/store";
 import { InternalGroupNode, type TableNodeType } from "@/types/nodes.types";
-import Field from "@dbml/core/types/model_structure/field";
-import Table from "@dbml/core/types/model_structure/table";
+import type { Field, Table } from "@dbml/core";
 import {
   type NodeProps,
   useInternalNode,
