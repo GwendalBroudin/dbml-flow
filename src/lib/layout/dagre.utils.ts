@@ -29,7 +29,7 @@ export function getLayoutedGraph(
     rankdir,
     compound: true,
     ranksep: 100,
-    nodesep: 30,
+    nodesep: 40,
     align: centered ? undefined : "UL",
   });
   clearDagreGraph();
