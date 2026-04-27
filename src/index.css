@@ -223,4 +223,9 @@ body {
   filter: invert(1);
 }
 
+/* Hide Monaco color picker alpha strip in the DBML editor. */
+.dbml-editor .colorpicker-body .opacity-strip {
+  display: none;
+}
+
 /* #endregion */

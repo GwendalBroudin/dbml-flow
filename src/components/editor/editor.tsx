@@ -2,6 +2,7 @@ import { Editor, OnMount } from "@monaco-editor/react";
 import * as _ from "lodash-es";
 import React, { useCallback, useEffect } from "react";
 import { EDITOR_CONFIG, EDITOR_OPTIONS } from "./editor.constant";
+import { initDbmlFetaures } from "@/lib/monaco/init-dbml-feature";
 
 import useStore from "@/state/store";
 
@@ -17,12 +18,13 @@ const DBMLEditor: React.FC = () => {
 
   // Editor mount handler
   const handleEditorMount: OnMount = useCallback(
-    (editor) => {
+    (editor, monaco) => {
       setEditorModel(editor.getModel());
+      initDbmlFetaures(editor, monaco);
       editor.onDidFocusEditorText(() => setEditorTextFocus(true));
       editor.onDidBlurEditorText(() => setEditorTextFocus(false));
     },
-    [setEditorModel]
+    [setEditorModel, setEditorTextFocus]
   );
 
   // Code change handler with debounce
@@ -43,7 +45,7 @@ const DBMLEditor: React.FC = () => {
   }, [handleCodeChange]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="dbml-editor flex flex-col h-full">
       <GlobalErrorMessage error={globalError} />
       <Editor
         onMount={handleEditorMount}
