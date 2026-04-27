@@ -1,16 +1,14 @@
-import { GroupNodeType, NodeType, TableNodeType } from "@/types/nodes.types";
+import { GroupNodeType, TableNodeType } from "@/types/nodes.types";
 import dagre from "@dagrejs/dagre";
 import { Edge } from "@xyflow/react";
-import { getNodeSize, getNodesBounds } from "../math/math.helper";
+import { getNodeSize } from "../math/math.helper";
 
 const rankdir = "LR";
 
 const dagreGraph = new dagre.graphlib.Graph({
   multigraph: true,
   compound: true,
-})
-  .setDefaultEdgeLabel(() => ({}))
-  .setGraph({ rankdir, compound: true, ranksep: 30 });
+}).setDefaultEdgeLabel(() => ({}));
 
 function clearDagreGraph() {
   dagreGraph.nodes().forEach((node) => {
@@ -24,9 +22,16 @@ function clearDagreGraph() {
 export function getLayoutedGraph(
   tableNodes: TableNodeType[],
   groupNodes: GroupNodeType[],
-  edges: Edge[]
+  edges: Edge[],
+  centered = false,
 ) {
-  dagreGraph.setGraph({ rankdir, compound: true, ranksep: 30 });
+  dagreGraph.setGraph({
+    rankdir,
+    compound: true,
+    ranksep: 100,
+    nodesep: 30,
+    align: centered ? undefined : "UL",
+  });
   clearDagreGraph();
 
   // Set nodes with their width and height
@@ -50,8 +55,6 @@ export function getLayoutedGraph(
     dagreGraph.setEdge(edge.source, edge.target);
   });
 
-  console.log(dagreGraph);
-
   dagre.layout(dagreGraph);
 
   const newNodes = tableNodes.map((node) => {
@@ -61,10 +64,15 @@ export function getLayoutedGraph(
       ...node,
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
-      position: {
-        x: dagreNode.x - dagreNode.width / 2,
-        y: dagreNode.y - dagreNode.height / 2,
-      },
+      position: centered
+        ? {
+            x: dagreNode.x - dagreNode.width / 2,
+            y: dagreNode.y - dagreNode.height / 2,
+          }
+        : {
+            x: dagreNode.x,
+            y: dagreNode.y,
+          },
     };
 
     return newNode;
