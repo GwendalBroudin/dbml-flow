@@ -4,10 +4,7 @@ import {
   TableEdgeType,
   TableEdgeTypeName,
 } from "@/types/nodes.types";
-import Database from "@dbml/core/types/model_structure/database";
-import Endpoint from "@dbml/core/types/model_structure/endpoint";
-import Field from "@dbml/core/types/model_structure/field";
-import Ref from "@dbml/core/types/model_structure/ref";
+import type { Database, Endpoint, Field, Ref } from "@dbml/core";
 import { uniqBy } from "lodash-es";
 import { getFieldId, getGroupId, getTableId } from "./node-dmbl.parser";
 

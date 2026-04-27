@@ -1,10 +1,9 @@
-import { NodeTypes } from "@/types/nodes.types";
-import { Node } from "@xyflow/react";
+import { NodeType, NodeTypes } from "@/types/nodes.types";
 
-export function getNodeColor(node: Node) {
-  return (node.data.headerColor as string) ?? "#636363ff";
+export function getNodeColor(node: NodeType) {
+  return (node.data.color as string) ?? "#636363ff";
 }
 
-export function getNodeClass(node: Node) {
-  return node.type === NodeTypes.TableGroup ? "opacity-50" : "";
+export function getNodeClass(node: NodeType) {
+  return node.type === NodeTypes.TableGroup ? "opacity-30" : "";
 }

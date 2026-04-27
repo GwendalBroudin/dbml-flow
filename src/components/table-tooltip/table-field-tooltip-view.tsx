@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import Field from "@dbml/core/types/model_structure/field";
+import type { Field } from "@dbml/core";
 
 const TypeTitle = ({
   children,

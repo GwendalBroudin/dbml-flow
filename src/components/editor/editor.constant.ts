@@ -19,8 +19,10 @@ export const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
   },
   wordWrap: "off",
   scrollbar: {
-    vertical: "hidden",
-    horizontal: "hidden",
+    vertical: "auto",
+    horizontal: "auto",
+    verticalScrollbarSize: 10,
+    horizontalScrollbarSize: 10,
   },
   colorDecorators: true,
 };

@@ -10,7 +10,7 @@
 - [x] Groups folding 
 - [x] Show relation fields only
 - [x] Show table header only
-- [ ] Enums 
+- [x] Enums 
 - [ ] Composite foreign keys
 
 ## Notes 
@@ -19,7 +19,7 @@
 - [x] Field Notes
 
 ## Editor 
-- [ ] Color picker
+- [x] Color picker
 - [ ] Focus on double click node/fields
 - [ ] Focus on double click edge ?
 - [ ] Focus on double click group
@@ -27,13 +27,13 @@
 ## Misc
 - [ ] Generate svg, png
 - [ ] Download image from url (server side)
-- [ ] Hide editor 
+- [x] Hide editor 
 - [x] Viewer mode
 - [ ] Download dbml file from url (add warning when try to modify code)
 
 ## Bugs / to investigate
 - [ ] Function getTextWidth() returns wrong value on startup (8 instead of 7)
-- [ ] Scroll bar missing on editor
+- [x] Scroll bar missing on editor
 - [ ] Could group size and bounds be calculated inside component instead of state store ?
 
 # Sources 

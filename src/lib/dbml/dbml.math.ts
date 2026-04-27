@@ -5,7 +5,7 @@ import {
     HEADER_HEIGHT,
     ICON_SIZE,
 } from "@/components/table-constants";
-import Table from "@dbml/core/types/model_structure/table";
+import type { Table } from "@dbml/core";
 
 // Guess size function for nodes
 

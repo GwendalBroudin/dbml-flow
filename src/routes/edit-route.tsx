@@ -1,26 +1,38 @@
 import "@/lib/monaco/monarch-config";
 
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import DBMLEditor from "@/components/editor/editor";
 import Viewer from "@/components/viewer/viewer";
 import { Link } from "react-router-dom";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 export function EditRoute() {
   return (
     <div className="flex flex-col h-screen">
       <nav className="bg-primary">
-        <Link to={"view" + location.search}> Viewer</Link>
+        <Link className="text-mist-200" to={"view" + location.search}>
+          Viewer
+        </Link>
       </nav>
-      <PanelGroup direction="horizontal">
-        <Panel defaultSize={30} minSize={20}>
-          <DBMLEditor />
-        </Panel>
-        <PanelResizeHandle />
+      <ResizablePanelGroup orientation="horizontal">
+        <ResizablePanel
+          defaultSize="30%"
+          collapsible={true}
+          minSize="15%"
+          maxSize="50%"
+          className="resizable-overflow-visible"
+        >
+            <DBMLEditor />
+        </ResizablePanel>
 
-        <Panel minSize={40}>
+        <ResizableHandle withHandle={true} />
+        <ResizablePanel>
           <Viewer />
-        </Panel>
-      </PanelGroup>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }

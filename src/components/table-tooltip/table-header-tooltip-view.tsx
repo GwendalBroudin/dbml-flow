@@ -1,4 +1,4 @@
-import Table from "@dbml/core/types/model_structure/table";
+import type { Table } from "@dbml/core";
 
 export const TableHeaderTooltipView = ({ table }: { table: Table }) => {
   const note = table.note;

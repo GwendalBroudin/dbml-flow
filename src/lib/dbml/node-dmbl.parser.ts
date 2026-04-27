@@ -8,11 +8,7 @@ import {
   NodeTypes,
   TableNodeType,
 } from "@/types/nodes.types";
-import { Parser } from "@dbml/core";
-import Database from "@dbml/core/types/model_structure/database";
-import Field from "@dbml/core/types/model_structure/field";
-import Table from "@dbml/core/types/model_structure/table";
-import TableGroup from "@dbml/core/types/model_structure/tableGroup";
+import { Parser, type Database, type Field, type Table, type TableGroup } from "@dbml/core";
 import { findClosestSize } from "./dbml.math";
 
 //#region DBML to Nodes

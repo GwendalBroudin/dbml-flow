@@ -39,8 +39,7 @@ import { applySavedPositions, toNodeIndex } from "@/lib/layout/layout.helpers";
 import { getCodeFromUrl, setCodeInUrl } from "@/lib/url.helpers";
 import { toMapId } from "@/lib/utils";
 import { NodePositionIndex, NodeType, NodeTypes } from "@/types/nodes.types";
-import Database from "@dbml/core/types/model_structure/database";
-import { CompilerError } from "@dbml/core/types/parse/error";
+import type { CompilerError, Database } from "@dbml/core";
 import { debounce } from "lodash-es";
 import { editor } from "monaco-editor";
 
@@ -70,6 +69,7 @@ export type AppState = {
   foldedIds: Set<string>;
   relationOnly: boolean;
   relationOnlyOverrides: Set<string>;
+  centeredLayout: boolean;
 
   //initialisation
   initState: () => void;
@@ -136,7 +136,7 @@ const useStore = create<AppState>((set, get) => ({
   saveCodeInUrl: true,
   firstRender: true,
   edgesRelativeData: {} as EdgesRelativeData,
-
+  centeredLayout: false,
   initState: () => {
     const code = getCodeFromUrl() || StartupCode;
     set({ code, savedPositions: extractPositions(code) });
@@ -181,7 +181,7 @@ const useStore = create<AppState>((set, get) => ({
     if (!database) return;
     console.log("database", database);
 
-    const { savedPositions: initialSavedPositions, setSavedPositions } = get();
+    const { savedPositions: initialSavedPositions, setSavedPositions, centeredLayout } = get();
 
     const oldTableNode = get().nodes.filter((n) => n.type === NodeTypes.Table);
     const oldGroupNodes = get().nodes.filter(
@@ -197,7 +197,7 @@ const useStore = create<AppState>((set, get) => ({
       oldTableNode.length !== tableNodes.length ||
       oldGroupNodes.length !== groupNodes.length
     ) {
-      tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
+      tableNodes = getLayoutedGraph(tableNodes, groupNodes, edges, centeredLayout);
     }
 
     // Preserve existing node positions
@@ -364,12 +364,12 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
   onLayout: (direction, fitView) => {
-    const { nodes, edges } = get();
+    const { nodes, edges, centeredLayout } = get();
 
     const tableNodes = nodes.filter((n) => n.type === NodeTypes.Table);
     const groupNodes = nodes.filter((n) => n.type === NodeTypes.TableGroup);
 
-    const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges);
+    const newTableNodes = getLayoutedGraph(tableNodes, groupNodes, edges, centeredLayout);
 
     const newGroupNodes = getBoundedGroups(groupNodes, toMapId(newTableNodes));
 
